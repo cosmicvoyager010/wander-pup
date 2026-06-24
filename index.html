@@ -85,97 +85,226 @@
   @keyframes snowfall{0%{transform:translateY(-10px) translateX(0);opacity:1}100%{transform:translateY(50px) translateX(10px);opacity:0}}
   @keyframes breathpuff{0%{transform:scale(0);opacity:0.7}100%{transform:scale(3);opacity:0}}
 
-  /* ── PUPPY SVG CANVAS ── */
+  /* ── PUPPY (div-based — no SVG transform bugs) ── */
   #puppy-canvas{
     position:absolute;
     bottom:56px;
     left:50%;
     transform:translateX(-50%);
-    width:160px;height:140px;
+    width:88px;height:88px;
   }
-  #puppy-svg{width:100%;height:100%;overflow:visible}
+  #puppy{width:88px;height:88px;position:relative;}
+  #p-body{position:absolute;bottom:16px;left:16px;width:54px;height:38px;background:#c8854a;border-radius:40% 40% 35% 35%;}
+  #p-head{position:absolute;bottom:46px;left:26px;width:36px;height:32px;background:#c8854a;border-radius:50% 50% 40% 40%;}
+  #p-ear-l,#p-ear-r{position:absolute;width:14px;height:18px;background:#a0622a;border-radius:50% 50% 40% 40%;top:-10px;}
+  #p-ear-l{left:2px;transform-origin:bottom left;}#p-ear-r{right:2px;transform-origin:bottom right;}
+  #p-eye-l,#p-eye-r{position:absolute;width:7px;height:7px;background:#1a0a00;border-radius:50%;top:8px;}
+  #p-eye-l{left:6px;}#p-eye-r{right:6px;}
+  #p-eye-l::after,#p-eye-r::after{content:'';position:absolute;width:3px;height:3px;background:#fff;border-radius:50%;top:1px;left:1px;}
+  #p-nose{position:absolute;width:9px;height:6px;background:#2d1a0e;border-radius:50%;bottom:6px;left:50%;transform:translateX(-50%);}
+  #p-mouth{position:absolute;bottom:2px;left:50%;transform:translateX(-50%);width:14px;height:6px;}
+  #p-mouth::before{content:'';position:absolute;width:14px;height:8px;border-bottom:3px solid #a0622a;border-radius:0 0 50% 50%;top:0;left:0;}
+  #p-tongue{position:absolute;bottom:-3px;left:50%;transform:translateX(-50%);width:10px;height:10px;background:#ff6b8a;border-radius:50% 50% 50% 50%/40% 40% 60% 60%;opacity:0;transition:opacity 0.3s;}
+  #p-tail{position:absolute;bottom:28px;right:6px;width:22px;height:14px;background:#c8854a;border-radius:50% 80% 20% 50%;transform-origin:left center;}
+  #p-leg-fl,#p-leg-fr,#p-leg-bl,#p-leg-br{position:absolute;width:10px;height:20px;background:#c8854a;border-radius:4px 4px 6px 6px;bottom:0;transform-origin:top center;}
+  #p-leg-fl{left:22px;}#p-leg-fr{left:34px;}#p-leg-bl{right:20px;}#p-leg-br{right:10px;}
+  #p-leg-fl::after,#p-leg-fr::after,#p-leg-bl::after,#p-leg-br::after{content:'';position:absolute;bottom:-2px;left:50%;transform:translateX(-50%);width:10px;height:6px;background:#a0622a;border-radius:50%;}
+  #p-zzz{position:absolute;top:-22px;right:-12px;font-size:17px;font-weight:700;color:#9b7dbf;opacity:0;transition:opacity 0.8s;animation:floatZzz 2s ease-in-out infinite;pointer-events:none;}
 
-  /* whole body bounce — applied to the root <g> */
-  #puppy-group{animation:none}
-  .state-walk   #puppy-group{animation:walkBounce 0.5s ease-in-out infinite}
-  .state-run    #puppy-group{animation:walkBounce 0.25s ease-in-out infinite}
-  .state-excited#puppy-group{animation:excitedBounce 0.4s ease-in-out infinite}
-  .state-sleep  #puppy-group{animation:sleepBreath 4s ease-in-out infinite}
-  .state-nap    #puppy-group{animation:sleepBreath 5s ease-in-out infinite}
-  .state-sniff  #puppy-group{animation:sniffBob 1s ease-in-out infinite}
-  @keyframes walkBounce{0%,100%{transform:translateY(0px)}50%{transform:translateY(-4px)}}
-  @keyframes excitedBounce{0%,100%{transform:translateY(0)}25%{transform:translateY(-8px)}75%{transform:translateY(-3px)}}
-  @keyframes sleepBreath{0%,100%{transform:scaleY(1) translateY(0)}50%{transform:scaleY(1.03) translateY(-1px)}}
-  @keyframes sniffBob{0%,100%{transform:rotate(0deg)}50%{transform:rotate(6deg)}}
+  /* puppy walk/run animations — mapped to this app's state class names */
+  .state-walk #p-leg-fl{animation:pawL .35s ease infinite;}
+  .state-walk #p-leg-fr{animation:pawR .35s ease infinite;}
+  .state-walk #p-leg-bl{animation:pawR .35s ease infinite;}
+  .state-walk #p-leg-br{animation:pawL .35s ease infinite;}
+  .state-walk #p-tail{animation:tailWag .4s ease infinite;}
+  .state-walk #p-body{animation:bodyBob .35s ease infinite;}
+  .state-walk #p-head{animation:headBob .35s ease infinite;}
+  .state-walk #p-ear-l{animation:earFlap .6s ease infinite;}
+  .state-walk #p-ear-r{animation:earFlap .6s ease infinite reverse;}
+  .state-walk #puppy{animation:puppyRun .35s ease infinite;}
 
-  /* TAIL — SVG animateTransform handles this inline, no CSS needed */
+  .state-run #p-leg-fl{animation:pawL .22s ease infinite;}
+  .state-run #p-leg-fr{animation:pawR .22s ease infinite;}
+  .state-run #p-leg-bl{animation:pawR .22s ease infinite;}
+  .state-run #p-leg-br{animation:pawL .22s ease infinite;}
+  .state-run #p-tail{animation:tailWagFast .2s ease infinite;}
+  .state-run #p-body{animation:bodyBob .22s ease infinite;}
+  .state-run #p-head{animation:headBob .22s ease infinite;}
+  .state-run #puppy{animation:puppyRun .22s ease infinite;}
 
-  /* EARS — subtle flop using CSS transform on the SVG <g>, with explicit transform-box */
-  #ear-l{ transform-box:fill-box; transform-origin:50% 0% }
-  #ear-r{ transform-box:fill-box; transform-origin:50% 0% }
-  .state-excited #ear-l{animation:earFlapL 0.35s ease-in-out infinite alternate}
-  .state-excited #ear-r{animation:earFlapR 0.35s ease-in-out infinite alternate}
-  @keyframes earFlapL{0%{transform:rotate(-4deg)}100%{transform:rotate(4deg)}}
-  @keyframes earFlapR{0%{transform:rotate(4deg)}100%{transform:rotate(-4deg)}}
+  .state-excited #p-leg-fl{animation:pawL .22s ease infinite;}
+  .state-excited #p-leg-fr{animation:pawR .22s ease infinite;}
+  .state-excited #p-leg-bl{animation:pawR .22s ease infinite;}
+  .state-excited #p-leg-br{animation:pawL .22s ease infinite;}
+  .state-excited #p-tail{animation:tailWagFast .2s ease infinite;}
+  .state-excited #p-body{animation:bodyBob .22s ease infinite;}
+  .state-excited #p-head{animation:headBob .22s ease infinite;}
+  .state-excited #puppy{animation:celebration .3s ease infinite;}
+  .state-excited #p-tongue{opacity:1;}
 
-  /* EYE LIDS */
-  #eye-l-lid,#eye-r-lid{
-    transform-box:fill-box;transform-origin:50% 100%;
-    animation:blink 4s ease-in-out infinite;
-  }
-  .state-sleep #eye-l-lid,.state-sleep #eye-r-lid,
-  .state-nap   #eye-l-lid,.state-nap   #eye-r-lid{animation:none;transform:scaleY(1)}
-  @keyframes blink{0%,88%,100%{transform:scaleY(1)}92%,96%{transform:scaleY(0)}}
+  .state-sit #p-tail{animation:tailWag 1.2s ease infinite;}
+  .state-sit #p-body{animation:bodyBob 1.5s ease infinite;}
 
-  /* LEGS — pivot from the very top of each leg using transform-box */
-  #leg-fl,#leg-fr,#leg-rl,#leg-rr{
-    transform-box:fill-box;
-    transform-origin:50% 0%;
-  }
-  /* front pair: opposite phase */
-  .state-walk #leg-fl,.state-run #leg-fl{animation:legSwingA 0.5s ease-in-out infinite}
-  .state-walk #leg-fr,.state-run #leg-fr{animation:legSwingB 0.5s ease-in-out infinite}
-  /* rear pair: same phase but offset */
-  .state-walk #leg-rl,.state-run #leg-rl{animation:legSwingB 0.5s ease-in-out infinite}
-  .state-walk #leg-rr,.state-run #leg-rr{animation:legSwingA 0.5s ease-in-out infinite}
-  .state-run #leg-fl,.state-run #leg-fr,
-  .state-run #leg-rl,.state-run #leg-rr{animation-duration:0.22s}
-  @keyframes legSwingA{0%,100%{transform:rotate(-14deg)}50%{transform:rotate(14deg)}}
-  @keyframes legSwingB{0%,100%{transform:rotate(14deg)}50%{transform:rotate(-14deg)}}
+  .state-sleep #p-zzz{opacity:1;}
+  .state-nap   #p-zzz{opacity:1;}
 
-  /* zzz bubbles - ONLY shown at night */
-  #zzz-container{position:absolute;top:-20px;right:10px;pointer-events:none}
-  .zzz-bubble{
-    position:absolute;
-    font-weight:700;color:#9B8EC4;
-    opacity:0;animation:zzzFloat 3s ease-out infinite;
-  }
-  .zzz-bubble:nth-child(1){font-size:10px;right:0;animation-delay:0s}
-  .zzz-bubble:nth-child(2){font-size:14px;right:-8px;animation-delay:1s}
-  .zzz-bubble:nth-child(3){font-size:18px;right:-14px;animation-delay:2s}
-  @keyframes zzzFloat{
-    0%{opacity:0;transform:translateY(0) scale(0.5)}
-    20%{opacity:1}
-    80%{opacity:0.6}
-    100%{opacity:0;transform:translateY(-40px) scale(1.2)}
-  }
+  .state-sniff #p-head{animation:headBob .8s ease infinite;}
+  .state-sniff #p-tail{animation:tailWag .6s ease infinite;}
+  .state-sniff #p-nose{animation:bodyBob .5s ease infinite;}
+
+  /* keyframes */
+  @keyframes pawL{0%,100%{transform:rotate(-15deg)}50%{transform:rotate(15deg)}}
+  @keyframes pawR{0%,100%{transform:rotate(15deg)}50%{transform:rotate(-15deg)}}
+  @keyframes tailWag{0%,100%{transform:rotate(-20deg)}50%{transform:rotate(30deg)}}
+  @keyframes tailWagFast{0%,100%{transform:rotate(-35deg)}50%{transform:rotate(45deg)}}
+  @keyframes bodyBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+  @keyframes headBob{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-5px) rotate(3deg)}}
+  @keyframes puppyRun{0%,100%{transform:translateX(-1px)}50%{transform:translateX(1px)}}
+  @keyframes earFlap{0%,100%{transform:rotate(-5deg)}50%{transform:rotate(10deg)}}
+  @keyframes celebration{0%{transform:rotate(-6deg) scale(1.05)}50%{transform:rotate(6deg) scale(1.05)}100%{transform:rotate(-6deg) scale(1.05)}}
+  @keyframes floatZzz{0%,100%{transform:translateY(0) scale(1);opacity:0.8}50%{transform:translateY(-10px) scale(1.1);opacity:1}}
+
   /* heart bubble for excited */
   #heart-container{position:absolute;top:-15px;right:5px;pointer-events:none;display:none}
-  .heart-bubble{
-    position:absolute;font-size:14px;
-    animation:heartFloat 1.5s ease-out infinite;opacity:0;
-  }
+  .heart-bubble{position:absolute;font-size:14px;animation:heartFloat 1.5s ease-out infinite;opacity:0;}
   .heart-bubble:nth-child(2){animation-delay:0.5s;right:10px}
   .heart-bubble:nth-child(3){animation-delay:1s;right:-5px}
-  @keyframes heartFloat{
-    0%{opacity:0;transform:translateY(0)}
-    30%{opacity:1}
-    100%{opacity:0;transform:translateY(-30px)}
-  }
+  @keyframes heartFloat{0%{opacity:0;transform:translateY(0)}30%{opacity:1}100%{opacity:0;transform:translateY(-30px)}}
+
   /* paw prints when walking */
   #paw-track{position:absolute;bottom:0;left:0;right:0;height:62px;pointer-events:none;overflow:hidden}
   .paw{position:absolute;bottom:8px;font-size:10px;opacity:0;animation:pawAppear 2s ease-out forwards}
   @keyframes pawAppear{0%{opacity:0}20%{opacity:0.6}100%{opacity:0;transform:translateX(-60px)}}
+
+  /* ── WATER BOWL ── */
+  #water-bowl{
+    position:absolute;
+    bottom:74px;
+    right:-80px;
+    width:52px;
+    transition:right 0.6s cubic-bezier(0.34,1.2,0.64,1);
+    z-index:5;
+  }
+  #water-bowl.visible{ right:18px; }
+
+  #wb-bowl{
+    position:relative;
+    width:52px; height:18px;
+    background:linear-gradient(to bottom,#b0803a,#7a5520);
+    border-radius:4px 4px 16px 16px;
+    box-shadow:0 3px 8px rgba(0,0,0,0.25);
+    transition:background 0.5s;
+  }
+  /* summer ice mode — bowl gets a frosty tint */
+  #water-bowl.ice-mode #wb-bowl{
+    background:linear-gradient(to bottom,#7ab8d4,#4a8aaa);
+  }
+  #wb-water{
+    position:absolute;
+    top:3px; left:4px; right:4px; height:10px;
+    background:linear-gradient(to bottom,#7ec8e3,#4aa8d0);
+    border-radius:2px 2px 12px 12px;
+    overflow:hidden;
+    transition:background 0.5s;
+  }
+  #water-bowl.ice-mode #wb-water{
+    background:linear-gradient(to bottom,#c8f0ff,#7ec8e3);
+  }
+  /* ice cubes floating in bowl */
+  #wb-ice{
+    position:absolute;
+    top:1px; left:3px; right:3px;
+    display:flex; gap:3px; justify-content:center;
+    opacity:0; transition:opacity 0.4s;
+    pointer-events:none;
+  }
+  #water-bowl.ice-mode #wb-ice{ opacity:1; }
+  .ice-cube{
+    width:7px; height:7px;
+    background:rgba(255,255,255,0.82);
+    border-radius:2px;
+    border:1px solid rgba(180,230,255,0.9);
+    box-shadow:0 0 4px rgba(150,220,255,0.7);
+    animation:iceBob 2s ease-in-out infinite;
+  }
+  .ice-cube:nth-child(2){ animation-delay:0.7s; }
+  .ice-cube:nth-child(3){ animation-delay:1.4s; }
+  @keyframes iceBob{
+    0%,100%{ transform:translateY(0); }
+    50%{     transform:translateY(-2px); }
+  }
+  #wb-ripple{
+    position:absolute;
+    top:5px; left:10px;
+    width:14px; height:4px;
+    background:rgba(255,255,255,0.45);
+    border-radius:50%;
+    opacity:0;
+    animation:ripple 1s ease-in-out infinite;
+  }
+  #wb-label{
+    text-align:center;
+    font-size:13px;
+    margin-top:2px;
+    opacity:0.8;
+    transition:all 0.4s;
+  }
+  @keyframes ripple{
+    0%,100%{transform:scaleX(0.5);opacity:0}
+    50%{transform:scaleX(1);opacity:0.8}
+  }
+  #water-bowl.drinking #wb-ripple{ opacity:1; }
+
+  /* thirst level badge on bowl */
+  #wb-thirst-badge{
+    position:absolute;
+    top:-14px; left:50%; transform:translateX(-50%);
+    font-size:11px; font-weight:700;
+    background:rgba(255,255,255,0.9);
+    border-radius:10px; padding:1px 6px;
+    white-space:nowrap;
+    opacity:0; transition:opacity 0.4s;
+    color:#c05000;
+  }
+  #water-bowl.visible #wb-thirst-badge{ opacity:1; }
+
+  /* panting state — fast open-mouth pant when very hot/thirsty */
+  .state-pant #p-head{ animation:pantHead 0.25s ease-in-out infinite; }
+  .state-pant #p-tongue{ opacity:1; animation:pantTongue 0.25s ease-in-out infinite; }
+  .state-pant #p-tail{ animation:tailWag .5s ease infinite; }
+  .state-pant #p-body{ animation:bodyBob .25s ease-in-out infinite; }
+  @keyframes pantHead{ 0%,100%{transform:rotate(-4deg)} 50%{transform:rotate(4deg)} }
+  @keyframes pantTongue{ 0%,100%{transform:translateX(-50%) scaleY(1)} 50%{transform:translateX(-50%) scaleY(1.3)} }
+
+  /* puppy slides toward bowl while drinking */
+  #puppy-canvas.drinking{
+    animation:slideToBowl 0.55s cubic-bezier(0.4,0,0.2,1) forwards;
+  }
+  @keyframes slideToBowl{
+    from{ transform:translateX(-50%); }
+    to{   transform:translateX(calc(-50% + 56px)); }
+  }
+
+  /* drinking state — head bobs deep, tongue out, tail wags */
+  .state-drink #p-head{ animation:drinkBob 0.5s ease-in-out infinite; }
+  .state-drink #p-tongue{ opacity:1; }
+  .state-drink #p-tail{ animation:tailWag .4s ease infinite; }
+  .state-drink #p-ear-l{ animation:earFlap .7s ease infinite; }
+  .state-drink #p-ear-r{ animation:earFlap .7s ease infinite reverse; }
+  .state-drink #p-body{ animation:bodyBob .5s ease-in-out infinite; }
+  @keyframes drinkBob{
+    0%,100%{ transform:translateY(0) rotate(0deg); }
+    50%{     transform:translateY(9px) rotate(12deg); }
+  }
+
+  /* reset slide when done */
+  #puppy-canvas.drink-done{
+    animation:slideBack 0.45s cubic-bezier(0.4,0,0.2,1) forwards;
+  }
+  @keyframes slideBack{
+    from{ transform:translateX(calc(-50% + 56px)); }
+    to{   transform:translateX(-50%); }
+  }
 
   /* time-of-day label */
   #time-label{
@@ -348,11 +477,11 @@
     border-radius:50%;
     background:rgba(255,255,255,0.05);
   }
-  .adv-title{font-size:13px;opacity:0.7;margin-bottom:4px}
-  .adv-loc{font-size:17px;font-weight:700;margin-bottom:8px}
+  .adv-title{font-size:15px;font-weight:600;opacity:0.85;margin-bottom:6px}
+  .adv-loc{font-size:20px;font-weight:700;margin-bottom:10px;line-height:1.3}
   .adv-progress{height:6px;background:rgba(255,255,255,0.15);border-radius:3px;margin-bottom:8px}
   .adv-fill{height:100%;border-radius:3px;background:linear-gradient(to right,#FF9F43,#FFD700);transition:width 0.5s ease}
-  .adv-steps{font-size:12px;opacity:0.7}
+  .adv-steps{font-size:14px;opacity:0.85;line-height:1.4}
 
   /* history */
   .history-item{
@@ -575,128 +704,28 @@
   <!-- SCENE -->
   <div id="scene">
     <div id="sky"></div>
+    <div id="sun-moon">☀️</div>
     <canvas id="stars" width="400" height="280"></canvas>
     <div id="season-deco"></div>
     <div id="ground-strip"></div>
     <div id="ground-dark-strip"></div>
-    <div id="puppy-canvas" class="state-sit">
-      <!-- Puppy SVG — all parts anchored to body coordinate system -->
-      <!--
-        COORDINATE PLAN (viewBox 0 0 160 130):
-        Body ellipse  : cx=88, cy=75, rx=38, ry=22  → bottom edge y=97
-        Head circle   : cx=52, cy=55, r=26           → centre-left of body
-        Neck join     : body left edge x≈52, y≈75
-        Front legs    : attach at body bottom, x=62 & x=74,  y=97
-        Rear  legs    : attach at body bottom, x=96 & x=108, y=97
-        Tail          : attaches at body right, x=126, y=75, pivots there
-        Ears          : top of head, left x=42,y=32  right x=62,y=32
-      -->
-      <svg id="puppy-svg" viewBox="0 0 160 130" xmlns="http://www.w3.org/2000/svg">
-        <g id="puppy-group">
-
-          <!-- TAIL — pivots from attachment point on body right -->
-          <!-- Wrapper translated to attach point so rotation stays fixed -->
-          <g id="tail" transform="translate(124,73)">
-            <!-- tail curves up-right from origin (0,0) -->
-            <path d="M0,0 Q14,-8 18,-18 Q22,-28 14,-32" fill="none" stroke="#C8924E" stroke-width="9" stroke-linecap="round"/>
-            <ellipse cx="13" cy="-33" rx="7" ry="7" fill="#E8B87A"/>
-            <!-- SVG animateTransform for tail wag — rotates around (0,0) which is the attach point -->
-            <animateTransform attributeName="transform" attributeType="XML"
-              type="rotate" values="-15,0,0; 15,0,0; -15,0,0"
-              dur="0.7s" repeatCount="indefinite" additive="sum"/>
-          </g>
-
-          <!-- REAR LEGS — attached at body bottom y=97 -->
-          <!-- Each leg is a group translated to its shoulder point; rotation swings the whole leg -->
-          <g id="leg-rr" transform="translate(108,95)">
-            <!-- upper leg -->
-            <rect x="-5" y="0" width="11" height="18" rx="5" fill="#9B6A32"/>
-            <!-- lower leg (knee bend) -->
-            <rect x="-4" y="16" width="10" height="16" rx="4" fill="#7A5228"/>
-            <!-- paw -->
-            <ellipse cx="0" cy="33" rx="8" ry="5" fill="#7A5228"/>
-          </g>
-          <g id="leg-rl" transform="translate(96,95)">
-            <rect x="-5" y="0" width="11" height="18" rx="5" fill="#9B6A32"/>
-            <rect x="-4" y="16" width="10" height="16" rx="4" fill="#7A5228"/>
-            <ellipse cx="0" cy="33" rx="8" ry="5" fill="#7A5228"/>
-          </g>
-
-          <!-- BODY -->
-          <ellipse cx="88" cy="74" rx="38" ry="22" fill="#C8924E"/>
-          <!-- belly highlight -->
-          <ellipse cx="86" cy="81" rx="24" ry="13" fill="#F5D9A8" opacity="0.75"/>
-
-          <!-- COLLAR — sits at neck junction -->
-          <rect x="54" y="68" width="26" height="8" rx="4" fill="#FF6B35"/>
-          <circle cx="67" cy="72" r="4" fill="#FFD700"/>
-
-          <!-- FRONT LEGS — attached at body bottom front y=97 -->
-          <g id="leg-fr" transform="translate(74,95)">
-            <rect x="-5" y="0" width="11" height="20" rx="5" fill="#9B6A32"/>
-            <rect x="-4" y="18" width="10" height="16" rx="4" fill="#7A5228"/>
-            <ellipse cx="0" cy="35" rx="8" ry="5" fill="#7A5228"/>
-          </g>
-          <g id="leg-fl" transform="translate(62,95)">
-            <rect x="-5" y="0" width="11" height="20" rx="5" fill="#9B6A32"/>
-            <rect x="-4" y="18" width="10" height="16" rx="4" fill="#7A5228"/>
-            <ellipse cx="0" cy="35" rx="8" ry="5" fill="#7A5228"/>
-          </g>
-
-          <!-- NECK — connects body to head -->
-          <ellipse cx="57" cy="70" rx="16" ry="14" fill="#C8924E"/>
-
-          <!-- HEAD -->
-          <circle cx="50" cy="54" r="27" fill="#C8924E"/>
-
-          <!-- EARS — each anchored at its top centre so it swings naturally -->
-          <!-- Left ear: top at (38,30) -->
-          <g id="ear-l" transform="translate(38,30)">
-            <ellipse cx="0" cy="10" rx="10" ry="14" fill="#9B6A32" transform="rotate(-10,0,0)"/>
-          </g>
-          <!-- Right ear: top at (62,28) -->
-          <g id="ear-r" transform="translate(62,28)">
-            <ellipse cx="0" cy="10" rx="10" ry="14" fill="#9B6A32" transform="rotate(10,0,0)"/>
-          </g>
-
-          <!-- SNOUT -->
-          <ellipse cx="50" cy="62" rx="13" ry="9" fill="#E8B87A"/>
-
-          <!-- EYES -->
-          <g transform="translate(38,50)">
-            <ellipse cx="0" cy="0" rx="6" ry="7" fill="#fff"/>
-            <ellipse cx="0.5" cy="1" rx="4" ry="5" fill="#2D1B09"/>
-            <ellipse cx="1.5" cy="-1" rx="1.5" ry="1.5" fill="#fff" opacity="0.8"/>
-            <g id="eye-l-lid"><rect x="-6" y="-7" width="12" height="8" rx="3" fill="#C8924E"/></g>
-          </g>
-          <g transform="translate(62,50)">
-            <ellipse cx="0" cy="0" rx="6" ry="7" fill="#fff"/>
-            <ellipse cx="0.5" cy="1" rx="4" ry="5" fill="#2D1B09"/>
-            <ellipse cx="1.5" cy="-1" rx="1.5" ry="1.5" fill="#fff" opacity="0.8"/>
-            <g id="eye-r-lid"><rect x="-6" y="-7" width="12" height="8" rx="3" fill="#C8924E"/></g>
-          </g>
-
-          <!-- NOSE -->
-          <ellipse cx="50" cy="60" rx="6" ry="4.5" fill="#1A0F06"/>
-          <ellipse cx="48.5" cy="58.5" rx="1.8" ry="1.2" fill="#fff" opacity="0.55"/>
-
-          <!-- MOUTH -->
-          <path d="M45,65 Q50,70 55,65" fill="none" stroke="#9B6A32" stroke-width="1.5" stroke-linecap="round"/>
-
-          <!-- CHEEK BLUSH -->
-          <ellipse cx="34" cy="59" rx="5" ry="3" fill="#FF8FAB" opacity="0.28"/>
-          <ellipse cx="66" cy="59" rx="5" ry="3" fill="#FF8FAB" opacity="0.28"/>
-
-        </g>
-      </svg>
+    <div id="puppy-canvas">
+      <!-- div-based puppy — no SVG transform bugs, legs always on body -->
+      <div id="p-zzz">Zzz</div>
+      <div id="puppy" class="state-sit">
+        <div id="p-body"></div>
+        <div id="p-tail"></div>
+        <div id="p-leg-bl"></div><div id="p-leg-br"></div>
+        <div id="p-head">
+          <div id="p-ear-l"></div><div id="p-ear-r"></div>
+          <div id="p-eye-l"></div><div id="p-eye-r"></div>
+          <div id="p-nose"></div>
+          <div id="p-mouth"><div id="p-tongue"></div></div>
+        </div>
+        <div id="p-leg-fl"></div><div id="p-leg-fr"></div>
+      </div>
       <!-- speech bubble -->
       <div id="speech-bubble"></div>
-      <!-- zzz HTML layer -->
-      <div id="zzz-html" style="position:absolute;top:-10px;right:-10px;pointer-events:none;display:none">
-        <div class="zzz-bubble" style="top:0px;animation-delay:0s">z</div>
-        <div class="zzz-bubble" style="top:-18px;animation-delay:1s;font-size:14px">z</div>
-        <div class="zzz-bubble" style="top:-40px;animation-delay:2s;font-size:18px">Z</div>
-      </div>
       <div id="heart-container">
         <div class="heart-bubble">🤍</div>
         <div class="heart-bubble">💛</div>
@@ -704,6 +733,21 @@
       </div>
     </div>
     <div id="paw-track"></div>
+    <!-- water bowl — slides in after walk ends -->
+    <div id="water-bowl">
+      <div id="wb-thirst-badge"></div>
+      <div id="wb-bowl">
+        <div id="wb-water">
+          <div id="wb-ice">
+            <div class="ice-cube"></div>
+            <div class="ice-cube"></div>
+            <div class="ice-cube"></div>
+          </div>
+        </div>
+        <div id="wb-ripple"></div>
+      </div>
+      <div id="wb-label">💧</div>
+    </div>
     <div id="time-label">Good morning ☀️</div>
     <div id="season-label">Spring 🌸</div>
     <div id="puppy-mood-label">Ready for a walk!</div>
@@ -819,6 +863,7 @@
       <div class="tab-bar">
         <div class="tab active" onclick="switchAdv(this,'space')">🚀 Space</div>
         <div class="tab" onclick="switchAdv(this,'silk')">🗺️ Silk Road</div>
+        <div class="tab" onclick="switchAdv(this,'sea')">⛵ Sea Road</div>
         <div class="tab" onclick="switchAdv(this,'quest')">⚔️ Quest</div>
       </div>
 
@@ -834,6 +879,13 @@
         <div class="adv-loc" id="adv-silk-loc">Xi'an, China 🏯</div>
         <div class="adv-progress"><div class="adv-fill" id="adv-silk-fill" style="width:0%"></div></div>
         <div class="adv-steps" id="adv-silk-steps">Start walking the ancient route</div>
+      </div>
+
+      <div id="adv-sea" class="adventure-card" style="display:none">
+        <div class="adv-title">⛵ Sea Road</div>
+        <div class="adv-loc" id="adv-sea-loc">Guangzhou, China ⚓</div>
+        <div class="adv-progress"><div class="adv-fill" id="adv-sea-fill" style="width:0%"></div></div>
+        <div class="adv-steps" id="adv-sea-steps">Set sail along the maritime trade route</div>
       </div>
 
       <div id="adv-quest" class="adventure-card" style="display:none">
@@ -1081,7 +1133,7 @@ const S = {
   puppyName: 'Mochi',
   forcedHour: null,
   syncMethod: 'shortcuts',
-  questState: {active:false,world:null,puppyHp:20,enemyHp:0,ap:0},
+  questState: {active:false,world:null,puppyHp:20,enemyHp:0,ap:0,apBaseline:0},
   lastBadgeCheck: 0,
   motionEnabled: false,
   stepSinceLastPaw: 0,
@@ -1110,6 +1162,18 @@ const SILK_ROAD = [
   {name:"Baghdad, Iraq 📜",steps:30000},
   {name:"Constantinople 👑",steps:40000},
   {name:"Venice, Italy ⚓",steps:50000},
+];
+
+const SEA_ROAD = [
+  {name:"Guangzhou, China ⚓",steps:0},
+  {name:"South China Sea 🌊",steps:3000},
+  {name:"Malacca, Malaysia 🛶",steps:8000},
+  {name:"Colombo, Sri Lanka 🐚",steps:16000},
+  {name:"Calicut, India 🌴",steps:24000},
+  {name:"Hormuz, Persian Gulf 🏝️",steps:34000},
+  {name:"Aden, Yemen 🕯️",steps:45000},
+  {name:"Mogadishu, Somalia 🦒",steps:58000},
+  {name:"Alexandria, Egypt 🏛️",steps:75000},
 ];
 
 const SPACE_STOPS = [
@@ -1224,18 +1288,18 @@ function updateTimeOfDay(){
 
   // puppy state (don't change if walking)
   if(!S.walking){
-    const pc = document.getElementById('puppy-canvas');
+    const pc = document.getElementById('puppy');
     pc.className = 'state-'+td.puppyState;
     document.getElementById('puppy-mood-label').textContent = td.moodText;
   }
 
   // night sleep: only show zzz at night
-  const zzz = document.getElementById('zzz-html');
+  const zzz = document.getElementById('p-zzz');
   const sleepSetting = S.settings.sleep;
   if(td.nightMode && sleepSetting){
-    zzz.style.display = 'block';
+    zzz.style.opacity = '1';
   } else {
-    zzz.style.display = 'none';
+    zzz.style.opacity = '0';
   }
 
   // theme color meta
@@ -1338,7 +1402,7 @@ function updateSeason(){
 // PUPPY ANIMATIONS & SPEECH
 // ════════════════════════════════
 function setPuppyState(state){
-  const pc = document.getElementById('puppy-canvas');
+  const pc = document.getElementById('puppy');
   pc.className = 'state-'+state;
 }
 
@@ -1410,11 +1474,13 @@ function endWalk(){
   document.getElementById('btn-walk-toggle').textContent = '🐾 Start walk';
   document.getElementById('btn-walk-toggle').style.background = '';
   document.getElementById('walk-timer').style.display='none';
+  document.getElementById('stat-time').textContent = '0';
 
   const dur = Math.floor((Date.now()-S.walkStart)/60000);
   if(dur > 0 || S.steps > 0){
     const walk = {
       date: new Date().toLocaleDateString('en-GB',{weekday:'short',month:'short',day:'numeric'}),
+      dayKey: new Date().toDateString(),
       duration: dur,
       steps: S.steps,
       km: +(S.distKm).toFixed(2),
@@ -1428,17 +1494,168 @@ function endWalk(){
     saveState();
     renderHistory();
     updateStats();
-    openModal('modal-mood');
-    puppySay('Great walk! Good boy/girl! 🎉');
+
+    // 🐾 → 💧 drinking sequence — thirst scales with km + season + time of day
+    drinkWater(()=>{
+      openModal('modal-mood');
+    }, walk.km, dur);
   }
 
   disableMotion();
-  updateTimeOfDay(); // restore time-based state
+  updateTimeOfDay();
 }
 
 // ════════════════════════════════
-// MOTION SENSOR
+// THIRST SYSTEM
 // ════════════════════════════════
+/*
+  Thirst score (0–10) computed from three real factors:
+    1. Walk distance  — longer walk = more thirsty (vets say ~30ml/kg/km)
+    2. Season         — summer adds heat load
+    3. Time of day    — afternoon sun is hottest
+
+  Score → behaviour:
+    0–3  (short, cool)   : light thirst  — plain water, one lap phrase
+    4–6  (moderate)      : thirsty       — drinks longer, panting first
+    7–8  (hot/long)      : very thirsty  — pants → gulps → "sooo hot"
+    9–10 (summer noon+)  : heat alert    — ICE TREAT in bowl, special phrases
+
+  Ice is safe for dogs — vets confirm frozen treats are fine enrichment;
+  the old "ice causes bloat" myth has been debunked.
+*/
+function calcThirst(walkKm, walkDur){
+  let score = 0;
+
+  // distance factor (0–4 pts): every ~1.5 km adds a point, caps at 4
+  score += Math.min(4, walkKm / 1.5);
+
+  // duration factor (0–2 pts): 30+ min walks add up to 2 pts
+  score += Math.min(2, walkDur / 30);
+
+  // season factor
+  const season = getSeason().type;
+  if(season === 'summer')  score += 2.5;
+  else if(season === 'spring' || season === 'autumn') score += 0.5;
+  // winter: 0 bonus
+
+  // time-of-day factor
+  const slot = getTimeSlot(getHour());
+  if(slot === 'afternoon') score += 1.5;   // peak heat
+  else if(slot === 'evening') score += 0.8;
+  else if(slot === 'morning' || slot === 'dawn') score += 0;
+
+  return Math.min(10, score);
+}
+
+function drinkWater(onDone, walkKm, walkDur){
+  const thirst  = calcThirst(walkKm || 0, walkDur || 0);
+  const bowl    = document.getElementById('water-bowl');
+  const canvas  = document.getElementById('puppy-canvas');
+  const badge   = document.getElementById('wb-thirst-badge');
+  const label   = document.getElementById('wb-label');
+  const season  = getSeason().type;
+  const slot    = getTimeSlot(getHour());
+
+  // decide mode
+  const isIce   = thirst >= 9;   // summer noon+ long walk → ice treat
+  const isVeryThirsty = thirst >= 7;
+  const isThirsty     = thirst >= 4;
+
+  // configure bowl appearance
+  if(isIce){
+    bowl.classList.add('ice-mode');
+    label.textContent = '🧊';
+    badge.textContent = '🌡️ Ice treat!';
+  } else if(isVeryThirsty){
+    label.textContent = '💧💧';
+    badge.textContent = thirst >= 8 ? '😮‍💨 Very thirsty!' : '😛 Thirsty!';
+  } else if(isThirsty){
+    label.textContent = '💧';
+    badge.textContent = '😛 Thirsty';
+  } else {
+    label.textContent = '💧';
+    badge.textContent = 'Good walk! 🐾';
+  }
+
+  // thirst phrases
+  const thirstPhrases = {
+    low:  ['Good walk! 💧','Just a little sip 🐾','Water please! 💧'],
+    mid:  ['So thirsty! 💧😛','Need water! 🐶','*pants* Water! 😮‍💨'],
+    high: ['*PANT PANT* Water NOW!! 😮‍💨💦','Sooo hot!! 🥵 Water!','*panting hard* pleeeease 💦'],
+    ice:  ['🧊 ICE?! Oh WOW!! 🐶🎉','*sees ice* BEST DAY EVER!! 🧊','Is that ICE?! You\'re the BEST 🧊💕'],
+  };
+  const lapPhrases = {
+    low:  ['*sip sip* 🐶','*lap* Yum 💧'],
+    mid:  ['*lap lap lap* 🐶💧','*gulps* Ahhh 💧'],
+    high: ['*GULP GULP GULP* 💦💦','*lap lap lap lap* 💦 so good'],
+    ice:  ['*crunch crunch* 🧊😍','*lick lick* 🧊 Soooo cold!!','*CRUNCH* Best. Ice. Ever. 🧊'],
+  };
+  const donePhrases = {
+    low:  ['Refreshed! 🐾','Yum! All better 🐾'],
+    mid:  ['Ahh, so refreshing! 🐾💧','Much better! 🐾😊'],
+    high: ['FINALLY!! Ahhhh 😮‍💨💧 so good!','*big sigh* That hit the spot 💦🐾'],
+    ice:  ['🧊 Best treat EVER!! 🎉🐶','That ICE was AMAZING!! 🧊🐾💕','*happy zoomies brain* 🧊🎊 LOVE YOU'],
+  };
+
+  const tier = isIce ? 'ice' : isVeryThirsty ? 'high' : isThirsty ? 'mid' : 'low';
+  const pick = arr => arr[Math.floor(Math.random()*arr.length)];
+
+  // drinking duration scales with thirst (1.5s – 3.5s)
+  const drinkMs = 1500 + thirst * 200;
+
+  // ── SEQUENCE ──
+
+  // 1. If very thirsty, pant first before bowl appears
+  if(isVeryThirsty){
+    setPuppyState('pant');
+    puppySay(pick(thirstPhrases[tier]), 1400);
+    setTimeout(startBowl, 1200);
+  } else {
+    puppySay(pick(thirstPhrases[tier]), 1400);
+    startBowl();
+  }
+
+  function startBowl(){
+    // 2. Bowl slides in
+    bowl.classList.add('visible');
+
+    // 3. Puppy slides to bowl
+    setTimeout(()=>{
+      canvas.style.transform = '';
+      canvas.classList.add('drinking');
+
+      // 4. Drinking starts
+      setTimeout(()=>{
+        setPuppyState('drink');
+        bowl.classList.add('drinking');
+        puppySay(pick(lapPhrases[tier]), drinkMs - 200);
+
+        // 5. Done drinking
+        setTimeout(()=>{
+          setPuppyState('excited');
+          puppySay(pick(donePhrases[tier]), 2200);
+          bowl.classList.remove('drinking');
+
+          // 6. Slide back
+          canvas.classList.remove('drinking');
+          canvas.classList.add('drink-done');
+          setTimeout(()=>{
+            canvas.classList.remove('drink-done');
+            canvas.style.transform = 'translateX(-50%)';
+            bowl.classList.remove('visible','drinking','ice-mode');
+            badge.textContent = '';
+            label.textContent = '💧';
+
+            setTimeout(()=>{
+              setPuppyState('sit');
+              if(onDone) onDone();
+            }, 500);
+          }, 500);
+        }, drinkMs);
+      }, 550);
+    }, 700);
+  }
+}
 let _motionHandler = null;
 let _lastAccel = {x:0,y:0,z:0};
 let _stepCooldown = false;
@@ -1529,10 +1746,23 @@ function updateStats(){
 
 function calcStreak(){
   if(!S.walks.length) return 0;
-  const today = new Date().toDateString();
-  const dates = [...new Set(S.walks.map(w=>w.date))];
-  let count = dates.length; // simplified streak
-  return Math.min(count, S.streak+1);
+  // Build a set of calendar day-keys (YYYY-MM-DD) walked on, from each walk's real timestamp.
+  // (We use createdAt if present; fall back to parsing the display date as "today" for old data.)
+  const dayKeys = [...new Set(S.walks.map(w => w.dayKey || new Date().toDateString()))];
+  // Sort descending (most recent first) as actual Date objects
+  const days = dayKeys.map(k=>new Date(k)).sort((a,b)=>b-a);
+  let streak = 1;
+  for(let i=0;i<days.length-1;i++){
+    const diffDays = Math.round((days[i]-days[i+1])/86400000);
+    if(diffDays === 1){ streak++; }
+    else if(diffDays === 0){ continue; } // same day, doesn't break or extend
+    else break; // gap — streak ends here
+  }
+  // If the most recent walk wasn't today or yesterday, the streak is broken (0 — no current streak)
+  const mostRecent = days[0];
+  const todayDiff = Math.round((new Date(new Date().toDateString())-mostRecent)/86400000);
+  if(todayDiff > 1) return 0;
+  return streak;
 }
 
 function renderHistory(){
@@ -1583,8 +1813,27 @@ function updateAdventures(){
     silkIdx===SILK_ROAD.length-1 ? '🏆 You reached Venice!' :
     `${(silkNext.steps-S.totalSteps).toLocaleString()} steps to ${silkNext.name}`;
 
-  // Quest AP
-  S.questState.ap = Math.floor(S.totalSteps/100);
+  // Sea Road
+  let seaIdx = 0;
+  for(let i=0;i<SEA_ROAD.length;i++){if(S.totalSteps>=SEA_ROAD[i].steps)seaIdx=i;}
+  const seaNext = SEA_ROAD[Math.min(seaIdx+1,SEA_ROAD.length-1)];
+  const seaCur = SEA_ROAD[seaIdx];
+  const seaPct = seaIdx===SEA_ROAD.length-1 ? 100 :
+    Math.floor(((S.totalSteps-seaCur.steps)/(seaNext.steps-seaCur.steps))*100);
+  document.getElementById('adv-sea-loc').textContent = seaCur.name;
+  document.getElementById('adv-sea-fill').style.width = seaPct+'%';
+  document.getElementById('adv-sea-steps').textContent =
+    seaIdx===SEA_ROAD.length-1 ? '🏆 You reached Alexandria!' :
+    `${(seaNext.steps-S.totalSteps).toLocaleString()} steps to ${seaNext.name}`;
+
+  // Quest AP — only top up AP based on steps earned since the last sync,
+  // so spending AP in battle (questAction) isn't overwritten on the next addSteps() call
+  const earnedAp = Math.floor(S.totalSteps/100);
+  const newAp = earnedAp - (S.questState.apBaseline||0);
+  if(newAp > 0){
+    S.questState.ap += newAp;
+    S.questState.apBaseline = earnedAp;
+  }
   document.getElementById('quest-ap').textContent = `⚡ ${S.questState.ap} AP`;
 }
 
@@ -1593,6 +1842,7 @@ function switchAdv(tab, type){
   tab.classList.add('active');
   document.getElementById('adv-space').style.display = type==='space'?'block':'none';
   document.getElementById('adv-silk').style.display  = type==='silk'?'block':'none';
+  document.getElementById('adv-sea').style.display   = type==='sea'?'block':'none';
   document.getElementById('adv-quest').style.display = type==='quest'?'block':'none';
 }
 
@@ -1693,7 +1943,7 @@ function talkToPuppy(type){
   if(type==='sleep'){
     setPuppyState('sleep');
     document.getElementById('puppy-mood-label').textContent='Sleeping... 💤';
-    document.getElementById('zzz-html').style.display='block';
+    document.getElementById('p-zzz').style.opacity='1';
   } else if(type==='hi'||type==='great'||type==='walk'){
     setPuppyState('excited');
     document.getElementById('heart-container').style.display='block';

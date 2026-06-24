@@ -1,0 +1,2003 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Puppy Walk">
+<meta name="theme-color" content="#87CEEB" id="themeColor">
+<title>Puppy Walk</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  :root{
+    --sky-top:#87CEEB;--sky-bot:#E0F4FF;
+    --ground:#6db33f;--ground-dark:#4a8c28;
+    --puppy-body:#C8924E;--puppy-dark:#9B6A32;--puppy-light:#E8B87A;
+    --puppy-belly:#F5D9A8;--collar:#FF6B35;--nose:#2D1B09;
+    --accent:#FF9F43;--accent2:#7EC8E3;
+    --card:#ffffffee;--card-border:rgba(0,0,0,0.08);
+    --text:#2d2d2d;--text2:#666;--text3:#999;
+    --btn-bg:#FF9F43;--btn-text:#fff;
+    --success:#4CAF50;--danger:#f44336;--info:#2196F3;
+    --radius:16px;--radius-sm:10px;
+    --safe-top:env(safe-area-inset-top,0px);
+    --safe-bot:env(safe-area-inset-bottom,0px);
+  }
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    background:var(--sky-top);
+    min-height:100dvh;
+    overflow-x:hidden;
+    color:var(--text);
+    user-select:none;
+    -webkit-user-select:none;
+  }
+
+  /* ── SKY SCENE ── */
+  #scene{
+    position:relative;
+    width:100%;
+    height:280px;
+    overflow:hidden;
+    transition:background 2s ease;
+  }
+  #sky{
+    position:absolute;inset:0;
+    background:linear-gradient(to bottom,var(--sky-top),var(--sky-bot));
+    transition:all 2s ease;
+  }
+  #sun-moon{
+    position:absolute;
+    width:48px;height:48px;
+    border-radius:50%;
+    transition:all 2s ease;
+    font-size:36px;
+    display:flex;align-items:center;justify-content:center;
+    top:20px;right:40px;
+  }
+  #stars{
+    position:absolute;inset:0;
+    opacity:0;transition:opacity 2s ease;
+    pointer-events:none;
+  }
+  #ground-strip{
+    position:absolute;bottom:0;left:0;right:0;
+    height:72px;
+    background:var(--ground);
+    transition:background 2s ease;
+    border-radius:50% 50% 0 0/20px 20px 0 0;
+  }
+  #ground-dark-strip{
+    position:absolute;bottom:0;left:0;right:0;
+    height:20px;
+    background:var(--ground-dark);
+    transition:background 2s ease;
+  }
+  /* season decorations */
+  #season-deco{position:absolute;bottom:62px;left:0;right:0;height:40px;pointer-events:none}
+  .flower{position:absolute;bottom:0;font-size:18px;animation:sway 3s ease-in-out infinite}
+  .leaf{position:absolute;font-size:14px;animation:leaffall linear infinite}
+  .snowflake{position:absolute;font-size:12px;animation:snowfall linear infinite;opacity:0.8}
+  .breath{position:absolute;border-radius:50%;background:rgba(255,255,255,0.6);animation:breathpuff 2s ease-out infinite}
+  @keyframes sway{0%,100%{transform:rotate(-5deg)}50%{transform:rotate(5deg)}}
+  @keyframes leaffall{0%{transform:translateY(-20px) rotate(0deg);opacity:1}100%{transform:translateY(60px) rotate(360deg);opacity:0}}
+  @keyframes snowfall{0%{transform:translateY(-10px) translateX(0);opacity:1}100%{transform:translateY(50px) translateX(10px);opacity:0}}
+  @keyframes breathpuff{0%{transform:scale(0);opacity:0.7}100%{transform:scale(3);opacity:0}}
+
+  /* ── PUPPY SVG CANVAS ── */
+  #puppy-canvas{
+    position:absolute;
+    bottom:56px;
+    left:50%;
+    transform:translateX(-50%);
+    width:160px;height:140px;
+  }
+  #puppy-svg{width:100%;height:100%;overflow:visible}
+
+  /* whole body bounce — applied to the root <g> */
+  #puppy-group{animation:none}
+  .state-walk   #puppy-group{animation:walkBounce 0.5s ease-in-out infinite}
+  .state-run    #puppy-group{animation:walkBounce 0.25s ease-in-out infinite}
+  .state-excited#puppy-group{animation:excitedBounce 0.4s ease-in-out infinite}
+  .state-sleep  #puppy-group{animation:sleepBreath 4s ease-in-out infinite}
+  .state-nap    #puppy-group{animation:sleepBreath 5s ease-in-out infinite}
+  .state-sniff  #puppy-group{animation:sniffBob 1s ease-in-out infinite}
+  @keyframes walkBounce{0%,100%{transform:translateY(0px)}50%{transform:translateY(-4px)}}
+  @keyframes excitedBounce{0%,100%{transform:translateY(0)}25%{transform:translateY(-8px)}75%{transform:translateY(-3px)}}
+  @keyframes sleepBreath{0%,100%{transform:scaleY(1) translateY(0)}50%{transform:scaleY(1.03) translateY(-1px)}}
+  @keyframes sniffBob{0%,100%{transform:rotate(0deg)}50%{transform:rotate(6deg)}}
+
+  /* TAIL — SVG animateTransform handles this inline, no CSS needed */
+
+  /* EARS — subtle flop using CSS transform on the SVG <g>, with explicit transform-box */
+  #ear-l{ transform-box:fill-box; transform-origin:50% 0% }
+  #ear-r{ transform-box:fill-box; transform-origin:50% 0% }
+  .state-excited #ear-l{animation:earFlapL 0.35s ease-in-out infinite alternate}
+  .state-excited #ear-r{animation:earFlapR 0.35s ease-in-out infinite alternate}
+  @keyframes earFlapL{0%{transform:rotate(-4deg)}100%{transform:rotate(4deg)}}
+  @keyframes earFlapR{0%{transform:rotate(4deg)}100%{transform:rotate(-4deg)}}
+
+  /* EYE LIDS */
+  #eye-l-lid,#eye-r-lid{
+    transform-box:fill-box;transform-origin:50% 100%;
+    animation:blink 4s ease-in-out infinite;
+  }
+  .state-sleep #eye-l-lid,.state-sleep #eye-r-lid,
+  .state-nap   #eye-l-lid,.state-nap   #eye-r-lid{animation:none;transform:scaleY(1)}
+  @keyframes blink{0%,88%,100%{transform:scaleY(1)}92%,96%{transform:scaleY(0)}}
+
+  /* LEGS — pivot from the very top of each leg using transform-box */
+  #leg-fl,#leg-fr,#leg-rl,#leg-rr{
+    transform-box:fill-box;
+    transform-origin:50% 0%;
+  }
+  /* front pair: opposite phase */
+  .state-walk #leg-fl,.state-run #leg-fl{animation:legSwingA 0.5s ease-in-out infinite}
+  .state-walk #leg-fr,.state-run #leg-fr{animation:legSwingB 0.5s ease-in-out infinite}
+  /* rear pair: same phase but offset */
+  .state-walk #leg-rl,.state-run #leg-rl{animation:legSwingB 0.5s ease-in-out infinite}
+  .state-walk #leg-rr,.state-run #leg-rr{animation:legSwingA 0.5s ease-in-out infinite}
+  .state-run #leg-fl,.state-run #leg-fr,
+  .state-run #leg-rl,.state-run #leg-rr{animation-duration:0.22s}
+  @keyframes legSwingA{0%,100%{transform:rotate(-14deg)}50%{transform:rotate(14deg)}}
+  @keyframes legSwingB{0%,100%{transform:rotate(14deg)}50%{transform:rotate(-14deg)}}
+
+  /* zzz bubbles - ONLY shown at night */
+  #zzz-container{position:absolute;top:-20px;right:10px;pointer-events:none}
+  .zzz-bubble{
+    position:absolute;
+    font-weight:700;color:#9B8EC4;
+    opacity:0;animation:zzzFloat 3s ease-out infinite;
+  }
+  .zzz-bubble:nth-child(1){font-size:10px;right:0;animation-delay:0s}
+  .zzz-bubble:nth-child(2){font-size:14px;right:-8px;animation-delay:1s}
+  .zzz-bubble:nth-child(3){font-size:18px;right:-14px;animation-delay:2s}
+  @keyframes zzzFloat{
+    0%{opacity:0;transform:translateY(0) scale(0.5)}
+    20%{opacity:1}
+    80%{opacity:0.6}
+    100%{opacity:0;transform:translateY(-40px) scale(1.2)}
+  }
+  /* heart bubble for excited */
+  #heart-container{position:absolute;top:-15px;right:5px;pointer-events:none;display:none}
+  .heart-bubble{
+    position:absolute;font-size:14px;
+    animation:heartFloat 1.5s ease-out infinite;opacity:0;
+  }
+  .heart-bubble:nth-child(2){animation-delay:0.5s;right:10px}
+  .heart-bubble:nth-child(3){animation-delay:1s;right:-5px}
+  @keyframes heartFloat{
+    0%{opacity:0;transform:translateY(0)}
+    30%{opacity:1}
+    100%{opacity:0;transform:translateY(-30px)}
+  }
+  /* paw prints when walking */
+  #paw-track{position:absolute;bottom:0;left:0;right:0;height:62px;pointer-events:none;overflow:hidden}
+  .paw{position:absolute;bottom:8px;font-size:10px;opacity:0;animation:pawAppear 2s ease-out forwards}
+  @keyframes pawAppear{0%{opacity:0}20%{opacity:0.6}100%{opacity:0;transform:translateX(-60px)}}
+
+  /* time-of-day label */
+  #time-label{
+    position:absolute;top:12px;left:12px;
+    font-size:11px;font-weight:600;
+    background:rgba(255,255,255,0.3);
+    backdrop-filter:blur(4px);
+    -webkit-backdrop-filter:blur(4px);
+    padding:4px 10px;border-radius:20px;
+    color:#333;transition:color 2s ease;
+  }
+  #season-label{
+    position:absolute;top:12px;right:12px;
+    font-size:11px;
+    background:rgba(255,255,255,0.3);
+    backdrop-filter:blur(4px);
+    -webkit-backdrop-filter:blur(4px);
+    padding:4px 10px;border-radius:20px;
+    color:#333;
+  }
+  #puppy-mood-label{
+    position:absolute;bottom:74px;left:50%;transform:translateX(-50%);
+    font-size:11px;font-weight:600;
+    white-space:nowrap;
+    background:rgba(255,255,255,0.85);
+    padding:3px 10px;border-radius:20px;
+    color:#555;
+    transition:opacity 0.5s ease;
+  }
+
+  /* ── MAIN UI ── */
+  #app{
+    display:flex;flex-direction:column;
+    min-height:100dvh;
+  }
+  #main-content{
+    flex:1;
+    padding:0 0 80px;
+  }
+
+  /* stats bar */
+  #stats-bar{
+    display:grid;grid-template-columns:repeat(4,1fr);
+    gap:1px;
+    background:var(--card-border);
+    border-bottom:1px solid var(--card-border);
+  }
+  .stat-cell{
+    background:var(--card);
+    padding:10px 6px;
+    text-align:center;
+  }
+  .stat-val{font-size:18px;font-weight:700;color:var(--text);line-height:1}
+  .stat-ico{font-size:16px;margin-bottom:2px}
+  .stat-lbl{font-size:10px;color:var(--text2);margin-top:2px;text-transform:uppercase;letter-spacing:0.3px}
+
+  /* action buttons */
+  #action-zone{
+    padding:16px;
+    display:flex;gap:10px;
+    flex-direction:column;
+  }
+  .btn-primary{
+    background:var(--accent);
+    color:#fff;
+    border:none;
+    border-radius:var(--radius);
+    padding:16px;
+    font-size:17px;font-weight:600;
+    width:100%;cursor:pointer;
+    transition:transform 0.1s, opacity 0.1s;
+    display:flex;align-items:center;justify-content:center;gap:8px;
+  }
+  .btn-primary:active{transform:scale(0.97);opacity:0.9}
+  .btn-secondary{
+    background:var(--card);
+    color:var(--text);
+    border:1.5px solid var(--card-border);
+    border-radius:var(--radius);
+    padding:13px;
+    font-size:15px;font-weight:500;
+    width:100%;cursor:pointer;
+    transition:transform 0.1s, background 0.15s;
+    display:flex;align-items:center;justify-content:center;gap:8px;
+  }
+  .btn-secondary:active{transform:scale(0.97);background:#f5f5f5}
+  .btn-row{display:flex;gap:10px}
+  .btn-row .btn-secondary{flex:1}
+  .btn-danger{border-color:#ffcccc;color:var(--danger)}
+
+  /* section header */
+  .section-hd{
+    padding:16px 16px 8px;
+    font-size:13px;font-weight:600;
+    color:var(--text2);
+    text-transform:uppercase;
+    letter-spacing:0.5px;
+  }
+
+  /* health / step input card */
+  .card{
+    margin:0 16px 12px;
+    background:var(--card);
+    border:1px solid var(--card-border);
+    border-radius:var(--radius);
+    padding:16px;
+  }
+  .card-title{font-size:15px;font-weight:600;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+  .card-body{font-size:14px;color:var(--text2);line-height:1.5}
+
+  /* step input */
+  .step-input-row{display:flex;gap:8px;margin-top:12px;align-items:stretch}
+  .step-input-row input{
+    flex:1;
+    padding:12px;
+    border:1.5px solid var(--card-border);
+    border-radius:var(--radius-sm);
+    font-size:16px;
+    color:var(--text);
+    background:#f9f9f9;
+    outline:none;
+  }
+  .step-input-row input:focus{border-color:var(--accent)}
+  .step-input-row button{
+    padding:0 20px;
+    background:var(--accent);
+    color:#fff;
+    border:none;
+    border-radius:var(--radius-sm);
+    font-size:15px;font-weight:600;
+    cursor:pointer;
+  }
+
+  /* quick add buttons */
+  .quick-add{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+  .quick-add button{
+    padding:7px 14px;
+    background:#f0f0f0;
+    border:none;border-radius:20px;
+    font-size:13px;cursor:pointer;
+    color:var(--text);
+    transition:background 0.15s;
+  }
+  .quick-add button:active{background:#e0e0e0}
+
+  /* adventure tabs */
+  .tab-bar{display:flex;gap:2px;padding:0 16px;margin-bottom:8px}
+  .tab{
+    flex:1;padding:9px 4px;
+    text-align:center;font-size:13px;
+    border-bottom:2px solid transparent;
+    color:var(--text2);cursor:pointer;
+    transition:all 0.2s;
+  }
+  .tab.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
+
+  /* adventure display */
+  .adventure-card{
+    margin:0 16px 12px;
+    background:linear-gradient(135deg,#1a1a2e,#16213e);
+    border-radius:var(--radius);
+    padding:16px;
+    color:#fff;
+    position:relative;overflow:hidden;
+  }
+  .adventure-card::before{
+    content:'';position:absolute;
+    top:-20px;right:-20px;
+    width:80px;height:80px;
+    border-radius:50%;
+    background:rgba(255,255,255,0.05);
+  }
+  .adv-title{font-size:13px;opacity:0.7;margin-bottom:4px}
+  .adv-loc{font-size:17px;font-weight:700;margin-bottom:8px}
+  .adv-progress{height:6px;background:rgba(255,255,255,0.15);border-radius:3px;margin-bottom:8px}
+  .adv-fill{height:100%;border-radius:3px;background:linear-gradient(to right,#FF9F43,#FFD700);transition:width 0.5s ease}
+  .adv-steps{font-size:12px;opacity:0.7}
+
+  /* history */
+  .history-item{
+    display:flex;align-items:center;gap:12px;
+    padding:12px 16px;
+    border-bottom:1px solid var(--card-border);
+  }
+  .history-item:last-child{border-bottom:none}
+  .hist-icon{width:36px;height:36px;border-radius:50%;background:#fff3e0;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+  .hist-info{flex:1}
+  .hist-title{font-size:14px;font-weight:500}
+  .hist-sub{font-size:12px;color:var(--text2);margin-top:2px}
+  .hist-stat{text-align:right;font-size:13px;font-weight:600;color:var(--accent)}
+
+  /* badges */
+  .badges-grid{display:flex;flex-wrap:wrap;gap:8px;padding:0 16px 16px}
+  .badge{
+    display:flex;flex-direction:column;align-items:center;
+    width:72px;
+    background:var(--card);
+    border:1px solid var(--card-border);
+    border-radius:var(--radius-sm);
+    padding:10px 6px;
+    font-size:10px;color:var(--text2);text-align:center;
+  }
+  .badge-ico{font-size:26px;margin-bottom:4px}
+  .badge.locked{opacity:0.35;filter:grayscale(1)}
+
+  /* bottom nav */
+  #bottom-nav{
+    position:fixed;bottom:0;left:0;right:0;
+    background:var(--card);
+    border-top:1px solid var(--card-border);
+    display:grid;grid-template-columns:repeat(4,1fr);
+    padding-bottom:var(--safe-bot);
+    z-index:100;
+  }
+  .nav-btn{
+    padding:10px 4px 6px;
+    display:flex;flex-direction:column;align-items:center;
+    font-size:10px;color:var(--text2);cursor:pointer;
+    gap:3px;transition:color 0.15s;
+    border:none;background:transparent;
+  }
+  .nav-btn.active{color:var(--accent)}
+  .nav-btn .nav-icon{font-size:22px;transition:transform 0.15s}
+  .nav-btn.active .nav-icon{transform:scale(1.15)}
+
+  /* pages */
+  .page{display:none}
+  .page.active{display:block}
+
+  /* modal overlay */
+  .modal-overlay{
+    position:fixed;inset:0;
+    background:rgba(0,0,0,0.5);
+    z-index:200;
+    display:flex;align-items:flex-end;
+    opacity:0;transition:opacity 0.25s;
+    pointer-events:none;
+  }
+  .modal-overlay.open{opacity:1;pointer-events:all}
+  .modal-sheet{
+    background:#fff;
+    border-radius:20px 20px 0 0;
+    width:100%;
+    padding:20px;
+    padding-bottom:calc(20px + var(--safe-bot));
+    transform:translateY(100%);
+    transition:transform 0.3s ease;
+  }
+  .modal-overlay.open .modal-sheet{transform:translateY(0)}
+  .modal-handle{width:36px;height:4px;background:#ddd;border-radius:2px;margin:0 auto 16px}
+  .modal-title{font-size:18px;font-weight:700;margin-bottom:12px}
+
+  /* test mode panel */
+  #test-panel{
+    position:fixed;bottom:80px;left:16px;right:16px;
+    background:#1a1a2e;
+    border-radius:var(--radius);
+    padding:14px;
+    z-index:150;
+    display:none;
+    color:#fff;
+  }
+  #test-panel.open{display:block}
+  .test-title{font-size:13px;font-weight:600;margin-bottom:10px;opacity:0.8}
+  .test-btns{display:flex;flex-wrap:wrap;gap:6px}
+  .test-btn{
+    padding:7px 12px;
+    background:rgba(255,255,255,0.15);
+    border:none;border-radius:20px;
+    color:#fff;font-size:12px;cursor:pointer;
+  }
+  .test-btn:active{background:rgba(255,255,255,0.3)}
+
+  /* toast */
+  #toast{
+    position:fixed;top:calc(var(--safe-top) + 20px);left:50%;
+    transform:translateX(-50%) translateY(-80px);
+    background:#333;color:#fff;
+    padding:10px 20px;border-radius:20px;
+    font-size:14px;z-index:300;
+    transition:transform 0.3s ease;
+    white-space:nowrap;
+    max-width:90vw;
+  }
+  #toast.show{transform:translateX(-50%) translateY(0)}
+
+  /* sync option card */
+  .sync-option{
+    display:flex;align-items:center;gap:12px;
+    padding:14px;
+    background:var(--card);
+    border:1.5px solid var(--card-border);
+    border-radius:var(--radius-sm);
+    margin-bottom:8px;
+    cursor:pointer;
+  }
+  .sync-option.selected{border-color:var(--accent);background:#fff8f0}
+  .sync-option-icon{font-size:24px;flex-shrink:0}
+  .sync-option-text h4{font-size:14px;font-weight:600;margin-bottom:2px}
+  .sync-option-text p{font-size:12px;color:var(--text2);line-height:1.4}
+
+  /* walk active state */
+  body.walking #scene{height:200px}
+  body.walking #stats-bar .stat-cell{background:#fff9f0}
+
+  /* puppy speech bubble */
+  #speech-bubble{
+    position:absolute;
+    top:-30px;left:50%;transform:translateX(-50%);
+    background:rgba(255,255,255,0.95);
+    border-radius:12px;
+    padding:6px 12px;
+    font-size:12px;font-weight:600;
+    white-space:nowrap;
+    box-shadow:0 2px 8px rgba(0,0,0,0.15);
+    opacity:0;transition:opacity 0.4s ease;
+    pointer-events:none;
+    color:var(--text);
+  }
+  #speech-bubble::after{
+    content:'';position:absolute;bottom:-6px;left:50%;transform:translateX(-50%);
+    width:0;height:0;
+    border-left:6px solid transparent;
+    border-right:6px solid transparent;
+    border-top:6px solid rgba(255,255,255,0.95);
+  }
+  #speech-bubble.show{opacity:1}
+
+  /* settings rows */
+  .setting-row{
+    display:flex;align-items:center;
+    padding:14px 16px;
+    border-bottom:1px solid var(--card-border);
+  }
+  .setting-row:last-child{border-bottom:none}
+  .setting-label{flex:1;font-size:15px}
+  .setting-sub{font-size:12px;color:var(--text2);margin-top:2px}
+  .toggle{
+    width:48px;height:28px;
+    background:#ddd;border-radius:14px;
+    position:relative;cursor:pointer;
+    transition:background 0.25s;flex-shrink:0;
+    border:none;
+  }
+  .toggle::after{
+    content:'';position:absolute;
+    width:22px;height:22px;
+    background:#fff;border-radius:50%;
+    top:3px;left:3px;
+    transition:transform 0.25s;
+    box-shadow:0 1px 3px rgba(0,0,0,0.3);
+  }
+  .toggle.on{background:var(--accent)}
+  .toggle.on::after{transform:translateX(20px)}
+
+  /* step counter display */
+  #big-steps{
+    font-size:52px;font-weight:800;
+    text-align:center;
+    color:var(--text);
+    letter-spacing:-2px;
+    margin:8px 0 4px;
+    line-height:1;
+  }
+  #steps-label{font-size:13px;color:var(--text2);text-align:center;margin-bottom:16px}
+
+  /* walk timer */
+  #walk-timer{
+    text-align:center;
+    font-size:28px;font-weight:700;
+    font-variant-numeric:tabular-nums;
+    color:var(--accent);
+    margin:4px 0;
+  }
+
+  @media(prefers-color-scheme:dark){
+    :root{
+      --card:#1e1e1e;--card-border:rgba(255,255,255,0.1);
+      --text:#f0f0f0;--text2:#aaa;--text3:#666;
+      --ground:#3a6b1f;--ground-dark:#2a4d14;
+    }
+    body{background:#0f0f1a}
+    .btn-secondary{background:#2a2a2a}
+    .btn-secondary:active{background:#333}
+    .modal-sheet{background:#1e1e1e}
+    .setting-row{border-color:var(--card-border)}
+    #test-panel{background:#0f0f1a}
+    input{background:#2a2a2a;color:#f0f0f0;border-color:#444}
+    .quick-add button{background:#2a2a2a;color:#f0f0f0}
+    .quick-add button:active{background:#333}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- SCENE -->
+  <div id="scene">
+    <div id="sky"></div>
+    <canvas id="stars" width="400" height="280"></canvas>
+    <div id="season-deco"></div>
+    <div id="ground-strip"></div>
+    <div id="ground-dark-strip"></div>
+    <div id="puppy-canvas" class="state-sit">
+      <!-- Puppy SVG — all parts anchored to body coordinate system -->
+      <!--
+        COORDINATE PLAN (viewBox 0 0 160 130):
+        Body ellipse  : cx=88, cy=75, rx=38, ry=22  → bottom edge y=97
+        Head circle   : cx=52, cy=55, r=26           → centre-left of body
+        Neck join     : body left edge x≈52, y≈75
+        Front legs    : attach at body bottom, x=62 & x=74,  y=97
+        Rear  legs    : attach at body bottom, x=96 & x=108, y=97
+        Tail          : attaches at body right, x=126, y=75, pivots there
+        Ears          : top of head, left x=42,y=32  right x=62,y=32
+      -->
+      <svg id="puppy-svg" viewBox="0 0 160 130" xmlns="http://www.w3.org/2000/svg">
+        <g id="puppy-group">
+
+          <!-- TAIL — pivots from attachment point on body right -->
+          <!-- Wrapper translated to attach point so rotation stays fixed -->
+          <g id="tail" transform="translate(124,73)">
+            <!-- tail curves up-right from origin (0,0) -->
+            <path d="M0,0 Q14,-8 18,-18 Q22,-28 14,-32" fill="none" stroke="#C8924E" stroke-width="9" stroke-linecap="round"/>
+            <ellipse cx="13" cy="-33" rx="7" ry="7" fill="#E8B87A"/>
+            <!-- SVG animateTransform for tail wag — rotates around (0,0) which is the attach point -->
+            <animateTransform attributeName="transform" attributeType="XML"
+              type="rotate" values="-15,0,0; 15,0,0; -15,0,0"
+              dur="0.7s" repeatCount="indefinite" additive="sum"/>
+          </g>
+
+          <!-- REAR LEGS — attached at body bottom y=97 -->
+          <!-- Each leg is a group translated to its shoulder point; rotation swings the whole leg -->
+          <g id="leg-rr" transform="translate(108,95)">
+            <!-- upper leg -->
+            <rect x="-5" y="0" width="11" height="18" rx="5" fill="#9B6A32"/>
+            <!-- lower leg (knee bend) -->
+            <rect x="-4" y="16" width="10" height="16" rx="4" fill="#7A5228"/>
+            <!-- paw -->
+            <ellipse cx="0" cy="33" rx="8" ry="5" fill="#7A5228"/>
+          </g>
+          <g id="leg-rl" transform="translate(96,95)">
+            <rect x="-5" y="0" width="11" height="18" rx="5" fill="#9B6A32"/>
+            <rect x="-4" y="16" width="10" height="16" rx="4" fill="#7A5228"/>
+            <ellipse cx="0" cy="33" rx="8" ry="5" fill="#7A5228"/>
+          </g>
+
+          <!-- BODY -->
+          <ellipse cx="88" cy="74" rx="38" ry="22" fill="#C8924E"/>
+          <!-- belly highlight -->
+          <ellipse cx="86" cy="81" rx="24" ry="13" fill="#F5D9A8" opacity="0.75"/>
+
+          <!-- COLLAR — sits at neck junction -->
+          <rect x="54" y="68" width="26" height="8" rx="4" fill="#FF6B35"/>
+          <circle cx="67" cy="72" r="4" fill="#FFD700"/>
+
+          <!-- FRONT LEGS — attached at body bottom front y=97 -->
+          <g id="leg-fr" transform="translate(74,95)">
+            <rect x="-5" y="0" width="11" height="20" rx="5" fill="#9B6A32"/>
+            <rect x="-4" y="18" width="10" height="16" rx="4" fill="#7A5228"/>
+            <ellipse cx="0" cy="35" rx="8" ry="5" fill="#7A5228"/>
+          </g>
+          <g id="leg-fl" transform="translate(62,95)">
+            <rect x="-5" y="0" width="11" height="20" rx="5" fill="#9B6A32"/>
+            <rect x="-4" y="18" width="10" height="16" rx="4" fill="#7A5228"/>
+            <ellipse cx="0" cy="35" rx="8" ry="5" fill="#7A5228"/>
+          </g>
+
+          <!-- NECK — connects body to head -->
+          <ellipse cx="57" cy="70" rx="16" ry="14" fill="#C8924E"/>
+
+          <!-- HEAD -->
+          <circle cx="50" cy="54" r="27" fill="#C8924E"/>
+
+          <!-- EARS — each anchored at its top centre so it swings naturally -->
+          <!-- Left ear: top at (38,30) -->
+          <g id="ear-l" transform="translate(38,30)">
+            <ellipse cx="0" cy="10" rx="10" ry="14" fill="#9B6A32" transform="rotate(-10,0,0)"/>
+          </g>
+          <!-- Right ear: top at (62,28) -->
+          <g id="ear-r" transform="translate(62,28)">
+            <ellipse cx="0" cy="10" rx="10" ry="14" fill="#9B6A32" transform="rotate(10,0,0)"/>
+          </g>
+
+          <!-- SNOUT -->
+          <ellipse cx="50" cy="62" rx="13" ry="9" fill="#E8B87A"/>
+
+          <!-- EYES -->
+          <g transform="translate(38,50)">
+            <ellipse cx="0" cy="0" rx="6" ry="7" fill="#fff"/>
+            <ellipse cx="0.5" cy="1" rx="4" ry="5" fill="#2D1B09"/>
+            <ellipse cx="1.5" cy="-1" rx="1.5" ry="1.5" fill="#fff" opacity="0.8"/>
+            <g id="eye-l-lid"><rect x="-6" y="-7" width="12" height="8" rx="3" fill="#C8924E"/></g>
+          </g>
+          <g transform="translate(62,50)">
+            <ellipse cx="0" cy="0" rx="6" ry="7" fill="#fff"/>
+            <ellipse cx="0.5" cy="1" rx="4" ry="5" fill="#2D1B09"/>
+            <ellipse cx="1.5" cy="-1" rx="1.5" ry="1.5" fill="#fff" opacity="0.8"/>
+            <g id="eye-r-lid"><rect x="-6" y="-7" width="12" height="8" rx="3" fill="#C8924E"/></g>
+          </g>
+
+          <!-- NOSE -->
+          <ellipse cx="50" cy="60" rx="6" ry="4.5" fill="#1A0F06"/>
+          <ellipse cx="48.5" cy="58.5" rx="1.8" ry="1.2" fill="#fff" opacity="0.55"/>
+
+          <!-- MOUTH -->
+          <path d="M45,65 Q50,70 55,65" fill="none" stroke="#9B6A32" stroke-width="1.5" stroke-linecap="round"/>
+
+          <!-- CHEEK BLUSH -->
+          <ellipse cx="34" cy="59" rx="5" ry="3" fill="#FF8FAB" opacity="0.28"/>
+          <ellipse cx="66" cy="59" rx="5" ry="3" fill="#FF8FAB" opacity="0.28"/>
+
+        </g>
+      </svg>
+      <!-- speech bubble -->
+      <div id="speech-bubble"></div>
+      <!-- zzz HTML layer -->
+      <div id="zzz-html" style="position:absolute;top:-10px;right:-10px;pointer-events:none;display:none">
+        <div class="zzz-bubble" style="top:0px;animation-delay:0s">z</div>
+        <div class="zzz-bubble" style="top:-18px;animation-delay:1s;font-size:14px">z</div>
+        <div class="zzz-bubble" style="top:-40px;animation-delay:2s;font-size:18px">Z</div>
+      </div>
+      <div id="heart-container">
+        <div class="heart-bubble">🤍</div>
+        <div class="heart-bubble">💛</div>
+        <div class="heart-bubble">🧡</div>
+      </div>
+    </div>
+    <div id="paw-track"></div>
+    <div id="time-label">Good morning ☀️</div>
+    <div id="season-label">Spring 🌸</div>
+    <div id="puppy-mood-label">Ready for a walk!</div>
+  </div>
+
+  <!-- PAGES -->
+  <div id="main-content">
+
+    <!-- HOME PAGE -->
+    <div id="page-home" class="page active">
+      <div id="stats-bar">
+        <div class="stat-cell">
+          <div class="stat-ico">👟</div>
+          <div class="stat-val" id="stat-steps">0</div>
+          <div class="stat-lbl">Steps</div>
+        </div>
+        <div class="stat-cell">
+          <div class="stat-ico">📍</div>
+          <div class="stat-val" id="stat-dist">0.0</div>
+          <div class="stat-lbl">km</div>
+        </div>
+        <div class="stat-cell">
+          <div class="stat-ico">🔥</div>
+          <div class="stat-val" id="stat-streak">0</div>
+          <div class="stat-lbl">Streak</div>
+        </div>
+        <div class="stat-cell">
+          <div class="stat-ico">⏱</div>
+          <div class="stat-val" id="stat-time">0</div>
+          <div class="stat-lbl">min</div>
+        </div>
+      </div>
+
+      <div id="action-zone">
+        <div id="walk-timer" style="display:none">00:00</div>
+        <button class="btn-primary" id="btn-walk-toggle" onclick="toggleWalk()">
+          🐾 Start walk
+        </button>
+        <div class="btn-row">
+          <button class="btn-secondary" onclick="openStepEntry()">🍎 Add steps from Health</button>
+          <button class="btn-secondary" onclick="showSyncOptions()">📤 Sync options</button>
+        </div>
+        <div class="btn-row">
+          <button class="btn-secondary" onclick="openModal('modal-talk')">💬 Talk to Puppy</button>
+          <button class="btn-secondary" onclick="openModal('modal-mood')">😊 Mood log</button>
+        </div>
+      </div>
+
+      <!-- Step entry card -->
+      <div class="card" id="step-entry-card" style="display:none">
+        <div class="card-title">🍎 Today's steps from Health app</div>
+        <div class="card-body">
+          Open <b>Health → Browse → Steps</b> to see your step count, then enter it here. Your puppy catches up instantly!
+        </div>
+        <div class="step-input-row">
+          <input type="number" id="health-steps-input" placeholder="e.g. 8432" inputmode="numeric">
+          <button onclick="submitHealthSteps()">Give to Puppy 🐾</button>
+        </div>
+        <div class="quick-add" style="margin-top:10px">
+          <span style="font-size:12px;color:var(--text2);align-self:center">Quick add:</span>
+          <button onclick="addSteps(500)">+500</button>
+          <button onclick="addSteps(1000)">+1K</button>
+          <button onclick="addSteps(2000)">+2K</button>
+          <button onclick="addSteps(5000)">+5K</button>
+        </div>
+        <button class="btn-secondary" style="margin-top:10px" onclick="document.getElementById('step-entry-card').style.display='none'">Done ✓</button>
+      </div>
+
+      <!-- Sync options card -->
+      <div class="card" id="sync-card" style="display:none">
+        <div class="card-title">📤 How to sync your steps</div>
+        <div class="sync-option selected" onclick="selectSync(this,'shortcuts')">
+          <div class="sync-option-icon">📱</div>
+          <div class="sync-option-text">
+            <h4>Apple Shortcuts (Recommended)</h4>
+            <p>Create a shortcut to read Health steps, open when on WiFi or 4G. Battery-friendly, works offline.</p>
+          </div>
+        </div>
+        <div class="sync-option" onclick="selectSync(this,'manual')">
+          <div class="sync-option-icon">✍️</div>
+          <div class="sync-option-text">
+            <h4>Manual entry</h4>
+            <p>Check Health app, type today's steps. Simple and private — no connections needed.</p>
+          </div>
+        </div>
+        <div class="sync-option" onclick="selectSync(this,'motion')">
+          <div class="sync-option-icon">🏃</div>
+          <div class="sync-option-text">
+            <h4>Live motion sensor</h4>
+            <p>Counts steps in real time while you walk. Uses phone accelerometer, no GPS needed.</p>
+          </div>
+        </div>
+        <button class="btn-secondary" style="margin-top:8px" onclick="document.getElementById('sync-card').style.display='none'">Done ✓</button>
+      </div>
+
+      <!-- Shortcuts guide card (shown when shortcuts selected) -->
+      <div class="card" id="shortcuts-guide" style="display:none">
+        <div class="card-title">📱 Apple Shortcuts setup</div>
+        <div class="card-body">
+          <b>One-time setup (2 min):</b><br>
+          1. Open Shortcuts app → New Shortcut<br>
+          2. Add: <i>Get Health Samples</i> (type: Steps, period: Today)<br>
+          3. Add: <i>Open URL</i> → paste your app URL<br>
+          4. Add shortcut to Home Screen<br><br>
+          <b>Daily use:</b> Tap shortcut when on WiFi → steps auto-fill below 🐾<br><br>
+          <span style="color:var(--accent)">💡 Works great after a walk when you get home!</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ADVENTURE PAGE -->
+    <div id="page-adventure" class="page">
+      <div class="tab-bar">
+        <div class="tab active" onclick="switchAdv(this,'space')">🚀 Space</div>
+        <div class="tab" onclick="switchAdv(this,'silk')">🗺️ Silk Road</div>
+        <div class="tab" onclick="switchAdv(this,'quest')">⚔️ Quest</div>
+      </div>
+
+      <div id="adv-space" class="adventure-card">
+        <div class="adv-title">🚀 Cosmic Travel</div>
+        <div class="adv-loc" id="adv-space-loc">On the launchpad 🌍</div>
+        <div class="adv-progress"><div class="adv-fill" id="adv-space-fill" style="width:0%"></div></div>
+        <div class="adv-steps" id="adv-space-steps">Walk 500 steps to break orbit</div>
+      </div>
+
+      <div id="adv-silk" class="adventure-card" style="display:none">
+        <div class="adv-title">🗺️ Silk Road</div>
+        <div class="adv-loc" id="adv-silk-loc">Xi'an, China 🏯</div>
+        <div class="adv-progress"><div class="adv-fill" id="adv-silk-fill" style="width:0%"></div></div>
+        <div class="adv-steps" id="adv-silk-steps">Start walking the ancient route</div>
+      </div>
+
+      <div id="adv-quest" class="adventure-card" style="display:none">
+        <div class="adv-title">⚔️ Adventure Quest</div>
+        <div class="adv-loc" id="adv-quest-loc">Choose a world 🌍</div>
+        <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap" id="quest-worlds">
+          <button onclick="startQuest('forest')" style="flex:1;padding:10px;background:rgba(255,255,255,0.1);border:none;border-radius:10px;color:#fff;font-size:13px;cursor:pointer">🌲 Forest</button>
+          <button onclick="startQuest('ocean')" style="flex:1;padding:10px;background:rgba(255,255,255,0.1);border:none;border-radius:10px;color:#fff;font-size:13px;cursor:pointer">🌊 Ocean</button>
+          <button onclick="startQuest('mountain')" style="flex:1;padding:10px;background:rgba(255,255,255,0.1);border:none;border-radius:10px;color:#fff;font-size:13px;cursor:pointer">🏔️ Mountain</button>
+        </div>
+        <div id="quest-battle" style="display:none;margin-top:12px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:10px">
+            <div style="text-align:center">
+              <div style="font-size:28px">🐶</div>
+              <div id="puppy-hp-bar" style="width:60px;height:6px;background:rgba(255,255,255,0.2);border-radius:3px;margin-top:4px">
+                <div id="puppy-hp-fill" style="height:100%;background:#4CAF50;border-radius:3px;width:100%"></div>
+              </div>
+              <div id="puppy-hp" style="font-size:11px;opacity:0.7;margin-top:2px">20/20 HP</div>
+            </div>
+            <div style="align-self:center;font-size:20px">⚔️</div>
+            <div style="text-align:center" id="enemy-display">
+              <div id="enemy-emoji" style="font-size:28px">❓</div>
+              <div id="enemy-hp-bar" style="width:60px;height:6px;background:rgba(255,255,255,0.2);border-radius:3px;margin-top:4px">
+                <div id="enemy-hp-fill" style="height:100%;background:#f44336;border-radius:3px;width:100%"></div>
+              </div>
+              <div id="enemy-hp" style="font-size:11px;opacity:0.7;margin-top:2px">? HP</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button onclick="questAction('fight')" style="flex:1;padding:9px 6px;background:rgba(255,255,255,0.15);border:none;border-radius:10px;color:#fff;font-size:12px;cursor:pointer">⚔️ Fight (2 AP)</button>
+            <button onclick="questAction('magic')" style="flex:1;padding:9px 6px;background:rgba(255,255,255,0.15);border:none;border-radius:10px;color:#fff;font-size:12px;cursor:pointer">✨ Magic (4 AP)</button>
+            <button onclick="questAction('heal')" style="flex:1;padding:9px 6px;background:rgba(255,255,255,0.15);border:none;border-radius:10px;color:#fff;font-size:12px;cursor:pointer">💊 Heal (3 AP)</button>
+            <button onclick="questAction('flee')" style="flex:1;padding:9px 6px;background:rgba(255,255,255,0.15);border:none;border-radius:10px;color:#fff;font-size:12px;cursor:pointer">🏃 Flee</button>
+          </div>
+          <div id="quest-ap" style="font-size:13px;margin-top:8px;opacity:0.8">⚡ 0 AP</div>
+        </div>
+      </div>
+
+      <div class="section-hd">Badges</div>
+      <div class="badges-grid" id="badges-grid"></div>
+    </div>
+
+    <!-- STATS PAGE -->
+    <div id="page-stats" class="page">
+      <div class="section-hd">All time</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 16px 16px">
+        <div style="background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius);padding:16px;text-align:center">
+          <div style="font-size:28px;font-weight:800;color:var(--accent)" id="total-walks">0</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:4px">Total walks</div>
+        </div>
+        <div style="background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius);padding:16px;text-align:center">
+          <div style="font-size:28px;font-weight:800;color:var(--accent)" id="total-km">0.0</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:4px">Total km</div>
+        </div>
+        <div style="background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius);padding:16px;text-align:center">
+          <div style="font-size:28px;font-weight:800;color:var(--accent)" id="total-steps-all">0</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:4px">Total steps</div>
+        </div>
+        <div style="background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius);padding:16px;text-align:center">
+          <div style="font-size:28px;font-weight:800;color:var(--accent)" id="best-streak">0</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:4px">Best streak</div>
+        </div>
+      </div>
+
+      <div class="section-hd">Walk history</div>
+      <div id="walk-history">
+        <div style="text-align:center;padding:32px;color:var(--text2)">
+          No walks yet — let's go, Puppy! 🐾
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">💾 Backup & Restore</div>
+        <div class="card-body" style="margin-bottom:12px">Copy your data to save or move to another device. Nothing leaves your device without your action.</div>
+        <div class="btn-row">
+          <button class="btn-secondary" onclick="backupData()">📤 Backup</button>
+          <button class="btn-secondary" onclick="restoreData()">📥 Restore</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS PAGE -->
+    <div id="page-settings" class="page">
+      <div class="section-hd">Puppy</div>
+      <div class="card" style="padding:0">
+        <div class="setting-row">
+          <div class="setting-label">
+            Puppy's name
+            <div class="setting-sub" id="puppy-name-display">Mochi</div>
+          </div>
+          <button class="btn-secondary" style="width:auto;padding:8px 14px" onclick="renamePuppy()">Edit</button>
+        </div>
+        <div class="setting-row">
+          <div class="setting-label">
+            🌙 Night sleep mode
+            <div class="setting-sub">Puppy sleeps at night (8pm–6am), zzz only then</div>
+          </div>
+          <button class="toggle on" id="toggle-sleep" onclick="toggleSetting(this,'sleep')"></button>
+        </div>
+        <div class="setting-row">
+          <div class="setting-label">
+            🍂 Seasonal decorations
+            <div class="setting-sub">Spring flowers, autumn leaves, winter snow</div>
+          </div>
+          <button class="toggle on" id="toggle-season" onclick="toggleSetting(this,'season')"></button>
+        </div>
+        <div class="setting-row">
+          <div class="setting-label">
+            🔔 Daily walk reminder
+            <div class="setting-sub" id="reminder-time-display">Off</div>
+          </div>
+          <button class="toggle" id="toggle-reminder" onclick="toggleReminder()"></button>
+        </div>
+        <div class="setting-row" id="reminder-time-row" style="display:none">
+          <div class="setting-label">Remind me at</div>
+          <input type="time" id="reminder-time-input" value="08:00" style="border:1px solid var(--card-border);border-radius:8px;padding:6px 10px;font-size:14px" onchange="saveReminderTime()">
+        </div>
+      </div>
+
+      <div class="section-hd">Data & Privacy</div>
+      <div class="card" style="padding:0">
+        <div class="setting-row">
+          <div class="setting-label">
+            Step counting
+            <div class="setting-sub" id="step-method-label">Manual / Apple Health</div>
+          </div>
+          <button class="btn-secondary" style="width:auto;padding:8px 14px" onclick="showSyncOptions()">Change</button>
+        </div>
+        <div class="setting-row">
+          <div class="setting-label">
+            🔒 Privacy
+            <div class="setting-sub">All data on your device only. No account, no cloud.</div>
+          </div>
+          <span style="color:var(--success);font-size:13px;font-weight:600">Private ✓</span>
+        </div>
+      </div>
+
+      <div class="section-hd">Debug</div>
+      <div class="card" style="padding:0">
+        <div class="setting-row" style="cursor:pointer" onclick="toggleTestMode()">
+          <div class="setting-label">
+            🧪 Test mode
+            <div class="setting-sub">Simulate walks, test time of day</div>
+          </div>
+          <button class="toggle" id="toggle-test" onclick="event.stopPropagation();toggleTestMode()"></button>
+        </div>
+        <div class="setting-row" style="cursor:pointer" onclick="if(confirm('Reset all walk data?'))resetAll()">
+          <div class="setting-label btn-danger">
+            🗑️ Reset all data
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <nav id="bottom-nav">
+    <button class="nav-btn active" onclick="showPage('home',this)">
+      <span class="nav-icon">🏠</span>Home
+    </button>
+    <button class="nav-btn" onclick="showPage('adventure',this)">
+      <span class="nav-icon">🚀</span>Adventure
+    </button>
+    <button class="nav-btn" onclick="showPage('stats',this)">
+      <span class="nav-icon">📊</span>Stats
+    </button>
+    <button class="nav-btn" onclick="showPage('settings',this)">
+      <span class="nav-icon">⚙️</span>Settings
+    </button>
+  </nav>
+</div>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="modal-talk" onclick="if(event.target===this)closeModal('modal-talk')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">💬 Talk to Puppy</div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <button class="btn-secondary" onclick="talkToPuppy('hi')">👋 Just say hi</button>
+      <button class="btn-secondary" onclick="talkToPuppy('walk')">🎉 Had a great walk!</button>
+      <button class="btn-secondary" onclick="talkToPuppy('miss')">🥰 Miss you, puppy</button>
+      <button class="btn-secondary" onclick="talkToPuppy('great')">✨ Feeling great today!</button>
+      <button class="btn-secondary" onclick="talkToPuppy('sleep')">😴 I'm going to sleep</button>
+      <button class="btn-secondary" onclick="talkToPuppy('busy')">🎯 I need to focus</button>
+      <button class="btn-secondary" onclick="closeModal('modal-talk')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-mood" onclick="if(event.target===this)closeModal('modal-mood')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">How was the walk? 🐾</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px" id="mood-grid">
+      <button onclick="logMood('😊')" style="padding:16px;background:var(--card);border:2px solid var(--card-border);border-radius:var(--radius);font-size:28px;cursor:pointer">😊</button>
+      <button onclick="logMood('🌸')" style="padding:16px;background:var(--card);border:2px solid var(--card-border);border-radius:var(--radius);font-size:28px;cursor:pointer">🌸</button>
+      <button onclick="logMood('🔥')" style="padding:16px;background:var(--card);border:2px solid var(--card-border);border-radius:var(--radius);font-size:28px;cursor:pointer">🔥</button>
+      <button onclick="logMood('😌')" style="padding:16px;background:var(--card);border:2px solid var(--card-border);border-radius:var(--radius);font-size:28px;cursor:pointer">😌</button>
+      <button onclick="logMood('🌧️')" style="padding:16px;background:var(--card);border:2px solid var(--card-border);border-radius:var(--radius);font-size:28px;cursor:pointer">🌧️</button>
+      <button onclick="logMood('😴')" style="padding:16px;background:var(--card);border:2px solid var(--card-border);border-radius:var(--radius);font-size:28px;cursor:pointer">😴</button>
+    </div>
+    <button class="btn-secondary" onclick="closeModal('modal-mood')">Never mind</button>
+  </div>
+</div>
+
+<!-- TEST PANEL -->
+<div id="test-panel">
+  <div class="test-title">🧪 Test Mode</div>
+  <div class="test-btns">
+    <button class="test-btn" onclick="addSteps(100)">+100</button>
+    <button class="test-btn" onclick="addSteps(500)">+500</button>
+    <button class="test-btn" onclick="addSteps(1000)">+1K</button>
+    <button class="test-btn" onclick="addSteps(5000)">+5K</button>
+    <button class="test-btn" onclick="forceTime(6)">☀️ Dawn</button>
+    <button class="test-btn" onclick="forceTime(9)">🌤 Morning</button>
+    <button class="test-btn" onclick="forceTime(14)">☀️ Afternoon</button>
+    <button class="test-btn" onclick="forceTime(18)">🌅 Evening</button>
+    <button class="test-btn" onclick="forceTime(21)">🌙 Night</button>
+    <button class="test-btn" onclick="forceTime(null)">🕐 Real time</button>
+    <button class="test-btn" onclick="simulateWalk()">🚶 Simulate walk</button>
+    <button class="test-btn" onclick="document.getElementById('test-panel').classList.remove('open')">✕ Close</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+// ════════════════════════════════
+// STATE
+// ════════════════════════════════
+const S = {
+  steps: 0,
+  totalSteps: 0,
+  distKm: 0,
+  streak: 0,
+  bestStreak: 0,
+  walkMinutes: 0,
+  walks: [],
+  walking: false,
+  walkStart: null,
+  walkInterval: null,
+  settings: {sleep:true,season:true,reminder:false,reminderTime:'08:00'},
+  puppyName: 'Mochi',
+  forcedHour: null,
+  syncMethod: 'shortcuts',
+  questState: {active:false,world:null,puppyHp:20,enemyHp:0,ap:0},
+  lastBadgeCheck: 0,
+  motionEnabled: false,
+  stepSinceLastPaw: 0,
+};
+
+const BADGES = [
+  {id:'first',icon:'🐾',name:'First steps',req:1,check:()=>S.totalSteps>=1},
+  {id:'century',icon:'💯',name:'100 steps',req:100,check:()=>S.totalSteps>=100},
+  {id:'thousand',icon:'🌟',name:'1K steps',req:1000,check:()=>S.totalSteps>=1000},
+  {id:'fivek',icon:'🏅',name:'5K steps',req:5000,check:()=>S.totalSteps>=5000},
+  {id:'tenk',icon:'🏆',name:'10K steps',req:10000,check:()=>S.totalSteps>=10000},
+  {id:'streak3',icon:'🔥',name:'3 day streak',req:3,check:()=>S.streak>=3},
+  {id:'streak7',icon:'⚡',name:'7 day streak',req:7,check:()=>S.streak>=7},
+  {id:'walks5',icon:'🚶',name:'5 walks',req:5,check:()=>S.walks.length>=5},
+  {id:'talks',icon:'💬',name:'Talked to puppy',req:1,check:()=>S.talked},
+  {id:'km1',icon:'📍',name:'1 km total',req:1,check:()=>S.distKm>=1},
+];
+
+const SILK_ROAD = [
+  {name:"Xi'an, China 🏯",steps:0},
+  {name:"Dunhuang, China 🏜️",steps:2000},
+  {name:"Kashgar, China 🕌",steps:5000},
+  {name:"Samarkand, Uzbekistan 💎",steps:10000},
+  {name:"Merv, Turkmenistan 🏛️",steps:15000},
+  {name:"Tehran, Iran 🌹",steps:22000},
+  {name:"Baghdad, Iraq 📜",steps:30000},
+  {name:"Constantinople 👑",steps:40000},
+  {name:"Venice, Italy ⚓",steps:50000},
+];
+
+const SPACE_STOPS = [
+  {name:"On the launchpad 🌍",steps:0},
+  {name:"Breaking orbit 🚀",steps:500},
+  {name:"Moon landing 🌕",steps:2000},
+  {name:"Mars arrival 🔴",steps:10000},
+  {name:"Asteroid belt 🪨",steps:25000},
+  {name:"Jupiter flyby 🌀",steps:50000},
+  {name:"Saturn's rings 💍",steps:100000},
+  {name:"Interstellar space ✨",steps:200000},
+];
+
+const ENEMIES = {
+  forest:['🐺','🐗','🦊','🦝','🐻'],
+  ocean:['🦑','🦈','🐙','🦞','🐡'],
+  mountain:['🦅','🦌','🐺','🐻‍❄️','🦁'],
+};
+
+// ════════════════════════════════
+// TIME OF DAY
+// ════════════════════════════════
+function getHour(){return S.forcedHour !== null ? S.forcedHour : new Date().getHours();}
+
+function getTimeSlot(h){
+  if(h>=5&&h<7)  return 'dawn';
+  if(h>=7&&h<12) return 'morning';
+  if(h>=12&&h<17)return 'afternoon';
+  if(h>=17&&h<20)return 'evening';
+  if(h>=20||h<5) return 'night';
+  return 'morning';
+}
+
+const TIME_DATA = {
+  dawn:{
+    skyTop:'#FFB347',skyBot:'#FFD9B3',
+    groundCol:'#5a9929',groundDark:'#3d6e1a',
+    sunMoon:'🌅',sunPos:{top:'30px',right:'40px'},
+    label:'Dawn 🌅',
+    moodText:'Good morning! Time to stretch! 🌅',
+    puppyState:'excited',
+    starOpacity:0,
+    nightMode:false,
+  },
+  morning:{
+    skyTop:'#87CEEB',skyBot:'#E0F4FF',
+    groundCol:'#6db33f',groundDark:'#4a8c28',
+    sunMoon:'☀️',sunPos:{top:'20px',right:'40px'},
+    label:'Good morning ☀️',
+    moodText:'Ready for our walk! 🐾',
+    puppyState:'sit',
+    starOpacity:0,
+    nightMode:false,
+  },
+  afternoon:{
+    skyTop:'#60B0E8',skyBot:'#BDE8FF',
+    groundCol:'#6db33f',groundDark:'#4a8c28',
+    sunMoon:'☀️',sunPos:{top:'10px',right:'50%'},
+    label:'Afternoon ☀️',
+    moodText:"It's warm! Let's explore 🌞",
+    puppyState:'sit',
+    starOpacity:0,
+    nightMode:false,
+  },
+  evening:{
+    skyTop:'#FF6B35',skyBot:'#FFB347',
+    groundCol:'#4a8c28',groundDark:'#2f5a16',
+    sunMoon:'🌇',sunPos:{top:'25px',right:'30px'},
+    label:'Evening 🌇',
+    moodText:'Golden hour walk time! 🌇',
+    puppyState:'excited',
+    starOpacity:0,
+    nightMode:false,
+  },
+  night:{
+    skyTop:'#1a1a2e',skyBot:'#16213e',
+    groundCol:'#2a3d1a',groundDark:'#1a2810',
+    sunMoon:'🌙',sunPos:{top:'20px',right:'35px'},
+    label:'Goodnight 🌙',
+    moodText:'Sleepy time... 💤',
+    puppyState:'sleep',
+    starOpacity:1,
+    nightMode:true,
+  },
+};
+
+function updateTimeOfDay(){
+  const h = getHour();
+  const slot = getTimeSlot(h);
+  const td = TIME_DATA[slot];
+
+  document.documentElement.style.setProperty('--sky-top',td.skyTop);
+  document.documentElement.style.setProperty('--sky-bot',td.skyBot);
+  document.documentElement.style.setProperty('--ground',td.groundCol);
+  document.documentElement.style.setProperty('--ground-dark',td.groundDark);
+
+  const sky = document.getElementById('sky');
+  sky.style.background = `linear-gradient(to bottom,${td.skyTop},${td.skyBot})`;
+
+  const sm = document.getElementById('sun-moon');
+  sm.textContent = td.sunMoon;
+  sm.style.top = td.sunPos.top;
+  sm.style.right = td.sunPos.right||'auto';
+  if(td.sunPos.right==='50%'){sm.style.right='';sm.style.left='50%';sm.style.transform='translateX(-50%)';}
+  else{sm.style.left='';sm.style.transform='';}
+
+  const stars = document.getElementById('stars');
+  stars.style.opacity = td.starOpacity;
+  if(td.starOpacity > 0) drawStars(stars);
+
+  document.getElementById('time-label').textContent = td.label;
+
+  // puppy state (don't change if walking)
+  if(!S.walking){
+    const pc = document.getElementById('puppy-canvas');
+    pc.className = 'state-'+td.puppyState;
+    document.getElementById('puppy-mood-label').textContent = td.moodText;
+  }
+
+  // night sleep: only show zzz at night
+  const zzz = document.getElementById('zzz-html');
+  const sleepSetting = S.settings.sleep;
+  if(td.nightMode && sleepSetting){
+    zzz.style.display = 'block';
+  } else {
+    zzz.style.display = 'none';
+  }
+
+  // theme color meta
+  document.getElementById('themeColor').content = td.skyTop;
+}
+
+function drawStars(canvas){
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const stars = [];
+  // deterministic star positions
+  let x = 42;
+  for(let i=0;i<60;i++){
+    x = (x*1103515245+12345)&0x7fffffff;
+    const sx = (x%380);
+    x = (x*1103515245+12345)&0x7fffffff;
+    const sy = (x%160);
+    x = (x*1103515245+12345)&0x7fffffff;
+    const r = 0.5+(x%10)*0.1;
+    stars.push({sx,sy,r});
+  }
+  stars.forEach(s=>{
+    ctx.beginPath();
+    ctx.arc(s.sx,s.sy,s.r,0,Math.PI*2);
+    ctx.fillStyle='rgba(255,255,255,0.8)';
+    ctx.fill();
+  });
+}
+
+// ════════════════════════════════
+// SEASONS
+// ════════════════════════════════
+function getSeason(){
+  const m = new Date().getMonth()+1;
+  if(m>=3&&m<=5)  return {name:'Spring 🌸',type:'spring'};
+  if(m>=6&&m<=8)  return {name:'Summer ☀️',type:'summer'};
+  if(m>=9&&m<=11) return {name:'Autumn 🍂',type:'autumn'};
+  return {name:'Winter ❄️',type:'winter'};
+}
+
+function updateSeason(){
+  const season = getSeason();
+  document.getElementById('season-label').textContent = season.name;
+
+  if(!S.settings.season){
+    document.getElementById('season-deco').innerHTML='';
+    return;
+  }
+
+  const deco = document.getElementById('season-deco');
+  deco.innerHTML = '';
+
+  if(season.type==='spring'){
+    ['🌸','🌷','🌼','💐','🌺'].forEach((f,i)=>{
+      const d = document.createElement('div');
+      d.className='flower';
+      d.textContent=f;
+      d.style.left=(10+i*18)+'%';
+      d.style.animationDelay=(i*0.4)+'s';
+      d.style.bottom='0';
+      deco.appendChild(d);
+    });
+  } else if(season.type==='summer'){
+    // water bowl appears
+    const wb = document.createElement('div');
+    wb.textContent='💧';
+    wb.style.cssText='position:absolute;bottom:0;right:15%;font-size:20px';
+    deco.appendChild(wb);
+  } else if(season.type==='autumn'){
+    ['🍁','🍂','🍁','🍂','🍁'].forEach((l,i)=>{
+      const d=document.createElement('div');
+      d.className='leaf';
+      d.textContent=l;
+      d.style.left=(5+i*20)+'%';
+      d.style.animationDuration=(2+i*0.3)+'s';
+      d.style.animationDelay=(i*0.5)+'s';
+      d.style.bottom='0';
+      deco.appendChild(d);
+    });
+  } else if(season.type==='winter'){
+    for(let i=0;i<8;i++){
+      const d=document.createElement('div');
+      d.className='snowflake';
+      d.textContent='❄';
+      d.style.left=(Math.random()*90)+'%';
+      d.style.animationDuration=(1.5+Math.random())+'s';
+      d.style.animationDelay=(Math.random()*2)+'s';
+      d.style.bottom='0';
+      deco.appendChild(d);
+    }
+    // breath puff
+    const bp=document.createElement('div');
+    bp.className='breath';
+    bp.style.cssText='right:42%;bottom:20px;width:8px;height:8px';
+    deco.appendChild(bp);
+  }
+}
+
+// ════════════════════════════════
+// PUPPY ANIMATIONS & SPEECH
+// ════════════════════════════════
+function setPuppyState(state){
+  const pc = document.getElementById('puppy-canvas');
+  pc.className = 'state-'+state;
+}
+
+function puppySay(text, duration=3000){
+  const sb = document.getElementById('speech-bubble');
+  sb.textContent = text;
+  sb.classList.add('show');
+  setTimeout(()=>sb.classList.remove('show'), duration);
+}
+
+function spawnPaw(){
+  const track = document.getElementById('paw-track');
+  const p = document.createElement('div');
+  p.className='paw';
+  p.textContent='🐾';
+  p.style.right=(Math.random()*60+10)+'%';
+  p.style.bottom=(4+Math.random()*20)+'px';
+  track.appendChild(p);
+  setTimeout(()=>p.remove(), 2000);
+}
+
+// ════════════════════════════════
+// WALK
+// ════════════════════════════════
+function toggleWalk(){
+  if(S.walking){
+    endWalk();
+  } else {
+    startWalk();
+  }
+}
+
+function startWalk(){
+  S.walking = true;
+  S.walkStart = Date.now();
+  document.body.classList.add('walking');
+  document.getElementById('btn-walk-toggle').textContent = '🏠 End walk';
+  document.getElementById('btn-walk-toggle').style.background = '#E74C3C';
+  document.getElementById('walk-timer').style.display='block';
+  setPuppyState('walk');
+  document.getElementById('puppy-mood-label').textContent = "Let's go! 🐾";
+
+  // try motion sensor
+  if(window.DeviceMotionEvent){
+    if(typeof DeviceMotionEvent.requestPermission==='function'){
+      DeviceMotionEvent.requestPermission().then(r=>{
+        if(r==='granted') enableMotion();
+      }).catch(()=>{});
+    } else {
+      enableMotion();
+    }
+  }
+
+  S.walkInterval = setInterval(()=>{
+    const elapsed = Math.floor((Date.now()-S.walkStart)/1000);
+    const mm = String(Math.floor(elapsed/60)).padStart(2,'0');
+    const ss = String(elapsed%60).padStart(2,'0');
+    document.getElementById('walk-timer').textContent = mm+':'+ss;
+    document.getElementById('stat-time').textContent = Math.floor(elapsed/60);
+  }, 1000);
+
+  puppySay('Woof! Adventure time! 🐾');
+}
+
+function endWalk(){
+  S.walking = false;
+  clearInterval(S.walkInterval);
+  document.body.classList.remove('walking');
+  document.getElementById('btn-walk-toggle').textContent = '🐾 Start walk';
+  document.getElementById('btn-walk-toggle').style.background = '';
+  document.getElementById('walk-timer').style.display='none';
+
+  const dur = Math.floor((Date.now()-S.walkStart)/60000);
+  if(dur > 0 || S.steps > 0){
+    const walk = {
+      date: new Date().toLocaleDateString('en-GB',{weekday:'short',month:'short',day:'numeric'}),
+      duration: dur,
+      steps: S.steps,
+      km: +(S.distKm).toFixed(2),
+      mood: '😊',
+    };
+    S.walks.unshift(walk);
+    S.streak = calcStreak();
+    if(S.streak > S.bestStreak) S.bestStreak = S.streak;
+    S.steps = 0;
+    S.distKm = 0;
+    saveState();
+    renderHistory();
+    updateStats();
+    openModal('modal-mood');
+    puppySay('Great walk! Good boy/girl! 🎉');
+  }
+
+  disableMotion();
+  updateTimeOfDay(); // restore time-based state
+}
+
+// ════════════════════════════════
+// MOTION SENSOR
+// ════════════════════════════════
+let _motionHandler = null;
+let _lastAccel = {x:0,y:0,z:0};
+let _stepCooldown = false;
+
+function enableMotion(){
+  S.motionEnabled = true;
+  _motionHandler = (e)=>{
+    if(!e.acceleration) return;
+    const a = e.acceleration;
+    const delta = Math.abs((a.x||0)-_lastAccel.x)+Math.abs((a.y||0)-_lastAccel.y)+Math.abs((a.z||0)-_lastAccel.z);
+    _lastAccel = {x:a.x||0,y:a.y||0,z:a.z||0};
+    if(delta > 8 && !_stepCooldown){
+      _stepCooldown = true;
+      addSteps(1);
+      setTimeout(()=>_stepCooldown=false, 400);
+    }
+  };
+  window.addEventListener('devicemotion', _motionHandler);
+}
+
+function disableMotion(){
+  S.motionEnabled = false;
+  if(_motionHandler) window.removeEventListener('devicemotion',_motionHandler);
+  _motionHandler = null;
+}
+
+// ════════════════════════════════
+// STEPS
+// ════════════════════════════════
+function addSteps(n){
+  S.steps += n;
+  S.totalSteps += n;
+  S.distKm += n * 0.0007; // ~0.7m per step
+  updateStats();
+  updateAdventures();
+  checkBadges();
+
+  // paw prints while walking
+  S.stepSinceLastPaw = (S.stepSinceLastPaw||0) + n;
+  if(S.stepSinceLastPaw >= 50){
+    S.stepSinceLastPaw = 0;
+    if(S.walking) spawnPaw();
+  }
+
+  // excite puppy on milestones
+  if(S.totalSteps % 1000 === 0 && S.totalSteps > 0){
+    setPuppyState('excited');
+    puppySay(`${S.totalSteps} steps! Amazing! 🎉`);
+    setTimeout(()=>setPuppyState(S.walking?'walk':'sit'), 3000);
+  }
+
+  saveState();
+}
+
+function submitHealthSteps(){
+  const inp = document.getElementById('health-steps-input');
+  const val = parseInt(inp.value);
+  if(!val||val<0){toast('Please enter a valid step count');return;}
+  addSteps(val);
+  inp.value='';
+  toast(`${val.toLocaleString()} steps given to puppy 🐾`);
+  setPuppyState('excited');
+  puppySay('Thank you! Woof! 🐾');
+  setTimeout(()=>{
+    setPuppyState('sit');
+    document.getElementById('puppy-mood-label').textContent='Feeling great!';
+  },3000);
+}
+
+function openStepEntry(){
+  const card = document.getElementById('step-entry-card');
+  card.style.display = card.style.display==='none'?'block':'none';
+  if(card.style.display==='block') card.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+// ════════════════════════════════
+// STATS UI
+// ════════════════════════════════
+function updateStats(){
+  document.getElementById('stat-steps').textContent = S.totalSteps.toLocaleString();
+  document.getElementById('stat-dist').textContent = S.distKm.toFixed(1);
+  document.getElementById('stat-streak').textContent = S.streak;
+  document.getElementById('total-walks').textContent = S.walks.length;
+  document.getElementById('total-km').textContent = (S.walks.reduce((a,w)=>a+(w.km||0),0)).toFixed(1);
+  document.getElementById('total-steps-all').textContent = S.totalSteps.toLocaleString();
+  document.getElementById('best-streak').textContent = S.bestStreak;
+}
+
+function calcStreak(){
+  if(!S.walks.length) return 0;
+  const today = new Date().toDateString();
+  const dates = [...new Set(S.walks.map(w=>w.date))];
+  let count = dates.length; // simplified streak
+  return Math.min(count, S.streak+1);
+}
+
+function renderHistory(){
+  const el = document.getElementById('walk-history');
+  if(!S.walks.length){
+    el.innerHTML='<div style="text-align:center;padding:32px;color:var(--text2)">No walks yet — let\'s go! 🐾</div>';
+    return;
+  }
+  el.innerHTML = S.walks.slice(0,20).map(w=>`
+    <div class="history-item">
+      <div class="hist-icon">${w.mood||'🐾'}</div>
+      <div class="hist-info">
+        <div class="hist-title">${w.date}</div>
+        <div class="hist-sub">${w.steps} steps · ${w.km} km</div>
+      </div>
+      <div class="hist-stat">${w.duration}min</div>
+    </div>
+  `).join('');
+}
+
+// ════════════════════════════════
+// ADVENTURES
+// ════════════════════════════════
+function updateAdventures(){
+  // Space
+  let spaceIdx = 0;
+  for(let i=0;i<SPACE_STOPS.length;i++){if(S.totalSteps>=SPACE_STOPS[i].steps)spaceIdx=i;}
+  const next = SPACE_STOPS[Math.min(spaceIdx+1,SPACE_STOPS.length-1)];
+  const cur = SPACE_STOPS[spaceIdx];
+  const spacePct = spaceIdx===SPACE_STOPS.length-1 ? 100 :
+    Math.floor(((S.totalSteps-cur.steps)/(next.steps-cur.steps))*100);
+  document.getElementById('adv-space-loc').textContent = cur.name;
+  document.getElementById('adv-space-fill').style.width = spacePct+'%';
+  document.getElementById('adv-space-steps').textContent =
+    spaceIdx===SPACE_STOPS.length-1 ? '✨ You reached the stars!' :
+    `${(next.steps-S.totalSteps).toLocaleString()} steps to ${next.name}`;
+
+  // Silk Road
+  let silkIdx = 0;
+  for(let i=0;i<SILK_ROAD.length;i++){if(S.totalSteps>=SILK_ROAD[i].steps)silkIdx=i;}
+  const silkNext = SILK_ROAD[Math.min(silkIdx+1,SILK_ROAD.length-1)];
+  const silkCur = SILK_ROAD[silkIdx];
+  const silkPct = silkIdx===SILK_ROAD.length-1 ? 100 :
+    Math.floor(((S.totalSteps-silkCur.steps)/(silkNext.steps-silkCur.steps))*100);
+  document.getElementById('adv-silk-loc').textContent = silkCur.name;
+  document.getElementById('adv-silk-fill').style.width = silkPct+'%';
+  document.getElementById('adv-silk-steps').textContent =
+    silkIdx===SILK_ROAD.length-1 ? '🏆 You reached Venice!' :
+    `${(silkNext.steps-S.totalSteps).toLocaleString()} steps to ${silkNext.name}`;
+
+  // Quest AP
+  S.questState.ap = Math.floor(S.totalSteps/100);
+  document.getElementById('quest-ap').textContent = `⚡ ${S.questState.ap} AP`;
+}
+
+function switchAdv(tab, type){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  tab.classList.add('active');
+  document.getElementById('adv-space').style.display = type==='space'?'block':'none';
+  document.getElementById('adv-silk').style.display  = type==='silk'?'block':'none';
+  document.getElementById('adv-quest').style.display = type==='quest'?'block':'none';
+}
+
+// ════════════════════════════════
+// QUEST
+// ════════════════════════════════
+function startQuest(world){
+  S.questState.active=true;
+  S.questState.world=world;
+  S.questState.puppyHp=20;
+  const enemies=ENEMIES[world];
+  S.questState.enemy=enemies[Math.floor(Math.random()*enemies.length)];
+  S.questState.enemyHp=Math.floor(8+Math.random()*12);
+  S.questState.enemyMaxHp=S.questState.enemyHp;
+  document.getElementById('quest-worlds').style.display='none';
+  document.getElementById('quest-battle').style.display='block';
+  document.getElementById('enemy-emoji').textContent=S.questState.enemy;
+  updateQuestUI();
+}
+
+function questAction(action){
+  const q=S.questState;
+  if(action==='fight'){
+    if(q.ap<2){toast('Need 2 AP to fight');return;}
+    q.ap-=2;
+    const dmg=Math.floor(2+Math.random()*4);
+    q.enemyHp=Math.max(0,q.enemyHp-dmg);
+    toast(`Attacked for ${dmg} damage! ⚔️`);
+  } else if(action==='magic'){
+    if(q.ap<4){toast('Need 4 AP for magic');return;}
+    q.ap-=4;
+    const dmg=Math.floor(5+Math.random()*8);
+    q.enemyHp=Math.max(0,q.enemyHp-dmg);
+    toast(`Magic blast! ${dmg} damage! ✨`);
+  } else if(action==='heal'){
+    if(q.ap<3){toast('Need 3 AP to heal');return;}
+    q.ap-=3;
+    q.puppyHp=Math.min(20,q.puppyHp+5);
+    toast('Healed 5 HP! 💊');
+  } else if(action==='flee'){
+    document.getElementById('quest-worlds').style.display='block';
+    document.getElementById('quest-battle').style.display='none';
+    q.active=false;
+    toast('Fled! Puppy ran away 🏃');
+    return;
+  }
+  // enemy attacks back
+  if(q.enemyHp>0){
+    const eDmg=Math.floor(1+Math.random()*3);
+    q.puppyHp=Math.max(0,q.puppyHp-eDmg);
+  }
+  updateQuestUI();
+  if(q.enemyHp<=0){
+    toast('Victory! Enemy defeated! 🎉');
+    setPuppyState('excited');
+    setTimeout(()=>{
+      document.getElementById('quest-worlds').style.display='block';
+      document.getElementById('quest-battle').style.display='none';
+      q.active=false;
+      setPuppyState('sit');
+    },2000);
+  }
+  if(q.puppyHp<=0){
+    toast('Puppy fainted... rest and try again! 😴');
+    document.getElementById('quest-worlds').style.display='block';
+    document.getElementById('quest-battle').style.display='none';
+    q.active=false;
+  }
+}
+
+function updateQuestUI(){
+  const q=S.questState;
+  document.getElementById('puppy-hp').textContent=`${q.puppyHp}/20 HP`;
+  document.getElementById('puppy-hp-fill').style.width=(q.puppyHp/20*100)+'%';
+  document.getElementById('enemy-hp').textContent=`${q.enemyHp} HP`;
+  document.getElementById('enemy-hp-fill').style.width=(q.enemyHp/(q.enemyMaxHp||1)*100)+'%';
+  document.getElementById('quest-ap').textContent=`⚡ ${q.ap} AP`;
+}
+
+// ════════════════════════════════
+// TALK TO PUPPY
+// ════════════════════════════════
+const PUPPY_RESPONSES = {
+  hi:   ['Woof woof! 🐾 So happy to see you!','*tail wags furiously* Hi!!!! 🥰','Woof!! My favourite human! 🐶'],
+  walk: ['ZOOMIES!! Let\'s go again tomorrow! 🐕💨','Great walk!! Sleep well tonight 😴','You\'re the BEST walk buddy ever! 🏅'],
+  miss: ['I miss you too! *licks face* 🥰','You\'re my favourite person 💛','*curls up close to you* 🐾'],
+  great:['YAYYY!! Let\'s celebrate with a walk! 🎉','Your energy is giving me zoomies! 🐕','That makes my tail go SO FAST 🐾'],
+  sleep:['Sleepy time... *yawn* 😴 I\'ll sleep too','Sweet dreams! I\'ll guard you 🌙','Zzz... goodnight... 💤'],
+  busy: ['I\'ll be very quiet 🤫 *sits patiently*','You got this! I\'ll wait here 🐾','*sits quietly and waits for you* 😊'],
+};
+
+function talkToPuppy(type){
+  S.talked = true;
+  closeModal('modal-talk');
+  const responses = PUPPY_RESPONSES[type];
+  const msg = responses[Math.floor(Math.random()*responses.length)];
+
+  if(type==='sleep'){
+    setPuppyState('sleep');
+    document.getElementById('puppy-mood-label').textContent='Sleeping... 💤';
+    document.getElementById('zzz-html').style.display='block';
+  } else if(type==='hi'||type==='great'||type==='walk'){
+    setPuppyState('excited');
+    document.getElementById('heart-container').style.display='block';
+    setTimeout(()=>{
+      document.getElementById('heart-container').style.display='none';
+      if(!S.walking) updateTimeOfDay();
+    },3000);
+  } else if(type==='busy'){
+    setPuppyState('sit');
+    document.getElementById('puppy-mood-label').textContent='Being quiet 🤫';
+  }
+
+  puppySay(msg, 4000);
+  checkBadges();
+  saveState();
+}
+
+// ════════════════════════════════
+// MOOD LOG
+// ════════════════════════════════
+function logMood(emoji){
+  if(S.walks.length>0){
+    S.walks[0].mood = emoji;
+    saveState();
+    renderHistory();
+  }
+  closeModal('modal-mood');
+  toast('Mood saved! '+emoji);
+  puppySay('Thanks for sharing! 🐾');
+}
+
+// ════════════════════════════════
+// BADGES
+// ════════════════════════════════
+function checkBadges(){
+  const unlocked = JSON.parse(localStorage.getItem('pw_badges')||'[]');
+  BADGES.forEach(b=>{
+    if(!unlocked.includes(b.id) && b.check()){
+      unlocked.push(b.id);
+      toast(`Badge unlocked: ${b.icon} ${b.name}!`);
+      setPuppyState('excited');
+      setTimeout(()=>setPuppyState(S.walking?'walk':'sit'),2000);
+    }
+  });
+  localStorage.setItem('pw_badges',JSON.stringify(unlocked));
+  renderBadges(unlocked);
+}
+
+function renderBadges(unlocked){
+  const grid = document.getElementById('badges-grid');
+  grid.innerHTML = BADGES.map(b=>`
+    <div class="badge ${unlocked.includes(b.id)?'':'locked'}">
+      <div class="badge-ico">${b.icon}</div>
+      <div>${b.name}</div>
+    </div>
+  `).join('');
+}
+
+// ════════════════════════════════
+// SYNC / DATA
+// ════════════════════════════════
+function showSyncOptions(){
+  const card = document.getElementById('sync-card');
+  card.style.display = card.style.display==='none'?'block':'none';
+  if(card.style.display==='block') card.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function selectSync(el, method){
+  document.querySelectorAll('.sync-option').forEach(s=>s.classList.remove('selected'));
+  el.classList.add('selected');
+  S.syncMethod = method;
+  document.getElementById('step-method-label').textContent =
+    method==='shortcuts'?'Apple Shortcuts':method==='manual'?'Manual entry':'Live motion sensor';
+  const guide = document.getElementById('shortcuts-guide');
+  guide.style.display = method==='shortcuts'?'block':'none';
+  if(method==='motion' && S.walking) enableMotion();
+  saveState();
+}
+
+function backupData(){
+  const data = {steps:S.totalSteps,distKm:S.distKm,streak:S.streak,walks:S.walks,bestStreak:S.bestStreak,puppyName:S.puppyName,settings:S.settings};
+  const str = JSON.stringify(data);
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(str).then(()=>toast('Data copied to clipboard 📋')).catch(()=>fallbackCopy(str));
+  } else fallbackCopy(str);
+}
+
+function fallbackCopy(str){
+  const ta=document.createElement('textarea');
+  ta.value=str;document.body.appendChild(ta);ta.select();
+  document.execCommand('copy');document.body.removeChild(ta);
+  toast('Data copied 📋');
+}
+
+function restoreData(){
+  const raw = prompt('Paste your saved data:');
+  if(!raw) return;
+  try{
+    const d = JSON.parse(raw);
+    S.totalSteps = d.steps||0;
+    S.distKm = d.distKm||0;
+    S.streak = d.streak||0;
+    S.bestStreak = d.bestStreak||0;
+    S.walks = d.walks||[];
+    S.puppyName = d.puppyName||'Mochi';
+    S.settings = d.settings||S.settings;
+    saveState();
+    updateStats();
+    renderHistory();
+    toast('Data restored! 🐾');
+  } catch(e){toast('Invalid data format');}
+}
+
+// ════════════════════════════════
+// SETTINGS
+// ════════════════════════════════
+function toggleSetting(btn, key){
+  S.settings[key] = !S.settings[key];
+  btn.classList.toggle('on', S.settings[key]);
+  saveState();
+  updateTimeOfDay();
+  updateSeason();
+}
+
+function toggleReminder(){
+  S.settings.reminder = !S.settings.reminder;
+  document.getElementById('toggle-reminder').classList.toggle('on', S.settings.reminder);
+  document.getElementById('reminder-time-row').style.display = S.settings.reminder?'flex':'none';
+  document.getElementById('reminder-time-display').textContent = S.settings.reminder ? `Daily at ${S.settings.reminderTime}` : 'Off';
+  if(S.settings.reminder && 'Notification' in window){
+    Notification.requestPermission().then(p=>{
+      if(p!=='granted') toast('Enable notifications in Settings for reminders');
+    });
+  }
+  saveState();
+}
+
+function saveReminderTime(){
+  S.settings.reminderTime = document.getElementById('reminder-time-input').value;
+  document.getElementById('reminder-time-display').textContent = `Daily at ${S.settings.reminderTime}`;
+  saveState();
+}
+
+function renamePuppy(){
+  const name = prompt('What shall we call your puppy?', S.puppyName);
+  if(name&&name.trim()){
+    S.puppyName = name.trim();
+    document.getElementById('puppy-name-display').textContent = S.puppyName;
+    saveState();
+    toast('Puppy renamed to '+S.puppyName+' 🐾');
+  }
+}
+
+function resetAll(){
+  localStorage.clear();
+  S.steps=0;S.totalSteps=0;S.distKm=0;S.streak=0;S.bestStreak=0;S.walks=[];S.walkMinutes=0;
+  updateStats();renderHistory();updateAdventures();
+  toast('All data reset 🗑️');
+}
+
+// ════════════════════════════════
+// TEST MODE
+// ════════════════════════════════
+function toggleTestMode(){
+  const panel = document.getElementById('test-panel');
+  const toggle = document.getElementById('toggle-test');
+  const open = !panel.classList.contains('open');
+  panel.classList.toggle('open', open);
+  toggle.classList.toggle('on', open);
+}
+
+function forceTime(h){
+  S.forcedHour = h;
+  updateTimeOfDay();
+  toast(h===null?'Using real clock':'Time forced to '+h+':00');
+}
+
+function simulateWalk(){
+  if(!S.walking) startWalk();
+  let i=0;
+  const interval = setInterval(()=>{
+    addSteps(50);
+    i++;
+    if(i>=20){clearInterval(interval);setTimeout(endWalk,500);}
+  },200);
+}
+
+// ════════════════════════════════
+// PERSIST
+// ════════════════════════════════
+function saveState(){
+  localStorage.setItem('pw3',JSON.stringify({
+    totalSteps:S.totalSteps,
+    distKm:S.distKm,
+    streak:S.streak,
+    bestStreak:S.bestStreak,
+    walks:S.walks.slice(0,100),
+    puppyName:S.puppyName,
+    settings:S.settings,
+    syncMethod:S.syncMethod,
+    talked:S.talked,
+  }));
+}
+
+function loadState(){
+  try{
+    const d = JSON.parse(localStorage.getItem('pw3')||'{}');
+    S.totalSteps = d.totalSteps||0;
+    S.distKm = d.distKm||0;
+    S.streak = d.streak||0;
+    S.bestStreak = d.bestStreak||0;
+    S.walks = d.walks||[];
+    S.puppyName = d.puppyName||'Mochi';
+    S.settings = Object.assign({sleep:true,season:true,reminder:false,reminderTime:'08:00'}, d.settings||{});
+    S.syncMethod = d.syncMethod||'shortcuts';
+    S.talked = d.talked||false;
+  }catch(e){}
+}
+
+// ════════════════════════════════
+// UI HELPERS
+// ════════════════════════════════
+function showPage(name, btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  btn.classList.add('active');
+  if(name==='stats') renderHistory();
+  if(name==='adventure') updateAdventures();
+}
+
+function openModal(id){
+  const m = document.getElementById(id);
+  m.classList.add('open');
+}
+
+function closeModal(id){
+  document.getElementById(id).classList.remove('open');
+}
+
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._to);
+  t._to = setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+// ════════════════════════════════
+// INIT
+// ════════════════════════════════
+loadState();
+updateStats();
+renderHistory();
+updateAdventures();
+updateTimeOfDay();
+updateSeason();
+checkBadges();
+
+document.getElementById('puppy-name-display').textContent = S.puppyName;
+document.getElementById('step-method-label').textContent =
+  S.syncMethod==='shortcuts'?'Apple Shortcuts':S.syncMethod==='manual'?'Manual entry':'Live motion sensor';
+
+// apply saved settings to toggles
+['sleep','season'].forEach(k=>{
+  const t=document.getElementById('toggle-'+k);
+  if(t) t.classList.toggle('on',S.settings[k]);
+});
+document.getElementById('toggle-reminder').classList.toggle('on',S.settings.reminder);
+if(S.settings.reminder) document.getElementById('reminder-time-row').style.display='flex';
+document.getElementById('reminder-time-display').textContent =
+  S.settings.reminder ? `Daily at ${S.settings.reminderTime}` : 'Off';
+document.getElementById('reminder-time-input').value = S.settings.reminderTime||'08:00';
+
+// update time every minute
+setInterval(updateTimeOfDay, 60000);
+// season doesn't need updating on interval (once per load is fine)
+
+// Puppy random idle behaviors
+setInterval(()=>{
+  if(S.walking || document.hidden) return;
+  const h = getHour();
+  const slot = getTimeSlot(h);
+  if(slot==='night') return;
+
+  const idle = ['sniff','sit','sit','sit'];
+  const r = idle[Math.floor(Math.random()*idle.length)];
+  setPuppyState(r);
+
+  const idleSayings = [
+    'Wanna go for a walk? 🐾',
+    '*sniffs the air* 🐽',
+    'I see a squirrel!! 🐿️',
+    '*yawns and stretches* 🐶',
+    'Walkies? Please? 🥺',
+  ];
+  if(Math.random()>0.5) puppySay(idleSayings[Math.floor(Math.random()*idleSayings.length)]);
+
+  setTimeout(()=>{
+    if(!S.walking) setPuppyState('sit');
+  }, 5000);
+}, 20000);
+
+console.log('🐾 Puppy Walk v3 — Time-aware, season-aware, privacy-first!');
+</script>
+</body>
+</html>

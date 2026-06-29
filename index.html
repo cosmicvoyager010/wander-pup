@@ -282,7 +282,7 @@
   }
   @keyframes slideToBowl{
     from{ transform:translateX(-50%); }
-    to{   transform:translateX(calc(-50% + 56px)); }
+    to{   transform:translateX(calc(-50% + 140px)); }
   }
 
   /* drinking state — head bobs deep, tongue out, tail wags */
@@ -302,7 +302,7 @@
     animation:slideBack 0.45s cubic-bezier(0.4,0,0.2,1) forwards;
   }
   @keyframes slideBack{
-    from{ transform:translateX(calc(-50% + 56px)); }
+    from{ transform:translateX(calc(-50% + 140px)); }
     to{   transform:translateX(-50%); }
   }
 
@@ -864,6 +864,7 @@
         <div class="tab active" onclick="switchAdv(this,'space')">🚀 Space</div>
         <div class="tab" onclick="switchAdv(this,'silk')">🗺️ Silk Road</div>
         <div class="tab" onclick="switchAdv(this,'sea')">⛵ Sea Road</div>
+        <div class="tab" onclick="switchAdv(this,'myth')">🧙 Myth</div>
         <div class="tab" onclick="switchAdv(this,'quest')">⚔️ Quest</div>
       </div>
 
@@ -886,6 +887,13 @@
         <div class="adv-loc" id="adv-sea-loc">Guangzhou, China ⚓</div>
         <div class="adv-progress"><div class="adv-fill" id="adv-sea-fill" style="width:0%"></div></div>
         <div class="adv-steps" id="adv-sea-steps">Set sail along the maritime trade route</div>
+      </div>
+
+      <div id="adv-myth" class="adventure-card" style="display:none;background:linear-gradient(135deg,#1a0a2e,#2a1040)">
+        <div class="adv-title">🧙 Mythical Journey</div>
+        <div class="adv-loc" id="adv-myth-loc">The Ancient World awaits 🌍</div>
+        <div class="adv-progress"><div class="adv-fill" id="adv-myth-fill" style="width:0%;background:linear-gradient(to right,#9b59b6,#e8d48a)"></div></div>
+        <div class="adv-steps" id="adv-myth-steps">Walk 1,000 steps to enter the mythic realm</div>
       </div>
 
       <div id="adv-quest" class="adventure-card" style="display:none">
@@ -1185,6 +1193,20 @@ const SPACE_STOPS = [
   {name:"Jupiter flyby 🌀",steps:50000},
   {name:"Saturn's rings 💍",steps:100000},
   {name:"Interstellar space ✨",steps:200000},
+];
+
+const MYTH_ROAD = [
+  {name:"The Ancient World awaits 🌍",steps:0},
+  {name:"Olympus Gate, Greece 🏛️",steps:1000},
+  {name:"Pharaoh's Court, Egypt 𓂀",steps:3000},
+  {name:"Valhalla's Bridge, Norse ⚡",steps:7000},
+  {name:"Druid Grove, Celtic 🍀",steps:13000},
+  {name:"Dragon Palace, China 🐉",steps:22000},
+  {name:"Aztec Sun Temple 🌞",steps:33000},
+  {name:"Camelot, King Arthur 🏰",steps:46000},
+  {name:"Baba Yaga's Forest, Slavic 🧙",steps:62000},
+  {name:"Isle of the Gods, Polynesia 🌺",steps:80000},
+  {name:"The Eternal Realm ✨",steps:100000},
 ];
 
 const ENEMIES = {
@@ -1826,6 +1848,19 @@ function updateAdventures(){
     seaIdx===SEA_ROAD.length-1 ? '🏆 You reached Alexandria!' :
     `${(seaNext.steps-S.totalSteps).toLocaleString()} steps to ${seaNext.name}`;
 
+  // Myth Road
+  let mythIdx = 0;
+  for(let i=0;i<MYTH_ROAD.length;i++){if(S.totalSteps>=MYTH_ROAD[i].steps)mythIdx=i;}
+  const mythNext = MYTH_ROAD[Math.min(mythIdx+1,MYTH_ROAD.length-1)];
+  const mythCur = MYTH_ROAD[mythIdx];
+  const mythPct = mythIdx===MYTH_ROAD.length-1 ? 100 :
+    Math.floor(((S.totalSteps-mythCur.steps)/(mythNext.steps-mythCur.steps))*100);
+  document.getElementById('adv-myth-loc').textContent = mythCur.name;
+  document.getElementById('adv-myth-fill').style.width = mythPct+'%';
+  document.getElementById('adv-myth-steps').textContent =
+    mythIdx===MYTH_ROAD.length-1 ? '🌟 You reached the Eternal Realm!' :
+    `${(mythNext.steps-S.totalSteps).toLocaleString()} steps to ${mythNext.name}`;
+
   // Quest AP — only top up AP based on steps earned since the last sync,
   // so spending AP in battle (questAction) isn't overwritten on the next addSteps() call
   const earnedAp = Math.floor(S.totalSteps/100);
@@ -1843,6 +1878,7 @@ function switchAdv(tab, type){
   document.getElementById('adv-space').style.display = type==='space'?'block':'none';
   document.getElementById('adv-silk').style.display  = type==='silk'?'block':'none';
   document.getElementById('adv-sea').style.display   = type==='sea'?'block':'none';
+  document.getElementById('adv-myth').style.display  = type==='myth'?'block':'none';
   document.getElementById('adv-quest').style.display = type==='quest'?'block':'none';
 }
 

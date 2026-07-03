@@ -152,6 +152,62 @@
   .state-sniff #p-tail{animation:tailWag .6s ease infinite;}
   .state-sniff #p-nose{animation:bodyBob .5s ease infinite;}
 
+  /* ── CYCLING — puppy rides in a front basket, no human shown ── */
+  #p-helmet{position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:22px;opacity:0;transition:opacity 0.5s ease;pointer-events:none;z-index:5;}
+  #p-helmet.visible{opacity:1;}
+
+  /* the bicycle graphic itself — sits behind the puppy, puppy rides in its front basket */
+  #bike-rig{
+    position:absolute;
+    bottom:8px;
+    left:50%;
+    transform:translateX(-50%) translateY(20px);
+    width:150px;height:70px;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity 0.5s ease, transform 0.5s cubic-bezier(0.34,1.4,0.64,1);
+    z-index:1;
+  }
+  #bike-rig.visible{ opacity:1; transform:translateX(-50%) translateY(0); }
+  #bike-rig svg{ width:100%; height:100%; display:block; }
+  .bike-wheel{ transform-origin:center; }
+  #bike-rig.rolling .bike-wheel-front,
+  #bike-rig.rolling .bike-wheel-back{ animation:wheelSpin .5s linear infinite; }
+  @keyframes wheelSpin{ from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+
+  /* basket that holds the puppy, mounted front-and-center on the handlebars */
+  #bike-basket{
+    position:absolute;
+    bottom:34px;
+    left:50%;
+    transform:translateX(-50%) translateY(20px);
+    width:74px;height:34px;
+    z-index:2;
+    pointer-events:none;
+    opacity:0;
+    transition:opacity 0.5s ease, transform 0.5s cubic-bezier(0.34,1.4,0.64,1);
+  }
+  #bike-basket.visible{ opacity:1; transform:translateX(-50%) translateY(0); }
+  #bike-basket svg{ width:100%; height:100%; display:block; }
+
+  /* puppy repositioned to sit inside the basket, facing forward, ears/tail poking out */
+  .state-cycling #puppy-canvas{ bottom:66px; }
+  .state-cycling #p-body{ transform:translateY(6px) scale(0.94); animation:cycleBodyBob .3s ease infinite; }
+  .state-cycling #p-head{ transform:translateY(2px) translateX(1px) scale(0.98); animation:cycleHeadBob .3s ease infinite; }
+  .state-cycling #p-leg-fl,
+  .state-cycling #p-leg-fr,
+  .state-cycling #p-leg-bl,
+  .state-cycling #p-leg-br{ opacity:0; } /* legs tucked inside basket, hidden */
+  .state-cycling #p-tail{ bottom:30px; right:2px; transform:rotate(15deg); animation:tailWagFast .25s ease infinite; opacity:1; }
+  .state-cycling #p-ear-l{ animation:earFlap .35s ease infinite; }
+  .state-cycling #p-ear-r{ animation:earFlap .35s ease infinite reverse; }
+  @keyframes cycleBodyBob{ 0%,100%{transform:translateY(6px) scale(0.94)} 50%{transform:translateY(3px) scale(0.94)} }
+  @keyframes cycleHeadBob{ 0%,100%{transform:translateY(2px) translateX(1px) scale(0.98) rotate(-2deg)} 50%{transform:translateY(0px) translateX(3px) scale(0.98) rotate(3deg)} }
+
+  #wakelock-dot{position:fixed;top:10px;left:10px;z-index:55;width:9px;height:9px;border-radius:50%;background:#34c759;opacity:0;transition:opacity 0.4s;pointer-events:none;}
+  #wakelock-dot.active{opacity:0.85;animation:wlPulse 3s ease-in-out infinite;}
+  @keyframes wlPulse{0%,100%{opacity:0.85;transform:scale(1)}50%{opacity:0.4;transform:scale(0.75)}}
+
   /* keyframes */
   @keyframes pawL{0%,100%{transform:rotate(-15deg)}50%{transform:rotate(15deg)}}
   @keyframes pawR{0%,100%{transform:rotate(15deg)}50%{transform:rotate(-15deg)}}
@@ -175,6 +231,12 @@
   #paw-track{position:absolute;bottom:0;left:0;right:0;height:62px;pointer-events:none;overflow:hidden}
   .paw{position:absolute;bottom:8px;font-size:10px;opacity:0;animation:pawAppear 2s ease-out forwards}
   @keyframes pawAppear{0%{opacity:0}20%{opacity:0.6}100%{opacity:0;transform:translateX(-60px)}}
+
+  /* speed lines while cycling, streaming behind the bike */
+  #cycle-speedlines{position:absolute;bottom:20px;left:0;right:0;height:50px;pointer-events:none;overflow:hidden;opacity:0;transition:opacity .3s}
+  #cycle-speedlines.visible{opacity:1}
+  .speedline{position:absolute;height:2px;background:rgba(255,255,255,0.55);border-radius:1px;opacity:0;animation:speedFly 0.6s linear infinite}
+  @keyframes speedFly{0%{opacity:0;transform:translateX(0)}15%{opacity:0.8}100%{opacity:0;transform:translateX(-90px)}}
 
   /* ── WATER BOWL ── */
   #water-bowl{
@@ -481,6 +543,8 @@
   .adv-loc{font-size:20px;font-weight:700;margin-bottom:10px;line-height:1.3}
   .adv-progress{height:6px;background:rgba(255,255,255,0.15);border-radius:3px;margin-bottom:8px}
   .adv-fill{height:100%;border-radius:3px;background:linear-gradient(to right,#FF9F43,#FFD700);transition:width 0.5s ease}
+  .light-progress{height:6px;background:rgba(0,0,0,0.08);border-radius:3px;overflow:hidden}
+  .light-progress .adv-fill{height:100%}
   .adv-steps{font-size:14px;opacity:0.85;line-height:1.4}
 
   /* history */
@@ -709,9 +773,71 @@
     <div id="season-deco"></div>
     <div id="ground-strip"></div>
     <div id="ground-dark-strip"></div>
+
+    <!-- bicycle rig — hidden until cycling starts, puppy rides in the front basket -->
+    <div id="cycle-speedlines"></div>
+    <div id="bike-rig">
+      <svg viewBox="0 0 150 70" xmlns="http://www.w3.org/2000/svg">
+        <!-- back wheel -->
+        <g class="bike-wheel bike-wheel-back" style="transform-origin:112px 52px">
+          <circle cx="112" cy="52" r="16" fill="none" stroke="#333" stroke-width="3"/>
+          <circle cx="112" cy="52" r="2.5" fill="#333"/>
+          <line x1="112" y1="52" x2="112" y2="37" stroke="#333" stroke-width="1.4"/>
+          <line x1="112" y1="52" x2="112" y2="67" stroke="#333" stroke-width="1.4"/>
+          <line x1="112" y1="52" x2="98" y2="52" stroke="#333" stroke-width="1.4"/>
+          <line x1="112" y1="52" x2="126" y2="52" stroke="#333" stroke-width="1.4"/>
+          <line x1="112" y1="52" x2="102" y2="42" stroke="#333" stroke-width="1.2"/>
+          <line x1="112" y1="52" x2="122" y2="62" stroke="#333" stroke-width="1.2"/>
+          <line x1="112" y1="52" x2="122" y2="42" stroke="#333" stroke-width="1.2"/>
+          <line x1="112" y1="52" x2="102" y2="62" stroke="#333" stroke-width="1.2"/>
+        </g>
+        <!-- front wheel -->
+        <g class="bike-wheel bike-wheel-front" style="transform-origin:38px 52px">
+          <circle cx="38" cy="52" r="16" fill="none" stroke="#333" stroke-width="3"/>
+          <circle cx="38" cy="52" r="2.5" fill="#333"/>
+          <line x1="38" y1="52" x2="38" y2="37" stroke="#333" stroke-width="1.4"/>
+          <line x1="38" y1="52" x2="38" y2="67" stroke="#333" stroke-width="1.4"/>
+          <line x1="38" y1="52" x2="24" y2="52" stroke="#333" stroke-width="1.4"/>
+          <line x1="38" y1="52" x2="52" y2="52" stroke="#333" stroke-width="1.4"/>
+          <line x1="38" y1="52" x2="28" y2="42" stroke="#333" stroke-width="1.2"/>
+          <line x1="38" y1="52" x2="48" y2="62" stroke="#333" stroke-width="1.2"/>
+          <line x1="38" y1="52" x2="48" y2="42" stroke="#333" stroke-width="1.2"/>
+          <line x1="38" y1="52" x2="28" y2="62" stroke="#333" stroke-width="1.2"/>
+        </g>
+        <!-- frame -->
+        <path d="M38,52 L70,52 L86,25 M70,52 L60,25 L86,25 M60,25 L44,25 M112,52 L86,25" fill="none" stroke="#FF9F43" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+        <!-- seat post + seat -->
+        <line x1="70" y1="52" x2="76" y2="30" stroke="#FF9F43" stroke-width="3" stroke-linecap="round"/>
+        <ellipse cx="78" cy="27" rx="8" ry="3" fill="#5a3a1a"/>
+        <!-- handlebar stem -->
+        <line x1="44" y1="25" x2="42" y2="14" stroke="#FF9F43" stroke-width="3" stroke-linecap="round"/>
+        <path d="M28,12 Q42,8 56,12" fill="none" stroke="#333" stroke-width="3" stroke-linecap="round"/>
+        <!-- pedal crank -->
+        <circle cx="70" cy="52" r="5" fill="none" stroke="#333" stroke-width="2"/>
+        <line x1="70" y1="52" x2="78" y2="59" stroke="#333" stroke-width="2.2" stroke-linecap="round"/>
+        <line x1="70" y1="52" x2="62" y2="45" stroke="#333" stroke-width="2.2" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div id="bike-basket">
+      <svg viewBox="0 0 74 34" xmlns="http://www.w3.org/2000/svg">
+        <!-- wicker front basket, puppy sits inside it -->
+        <path d="M6,14 L10,32 L64,32 L68,14 Z" fill="#c99a5b" stroke="#9a7038" stroke-width="1.5"/>
+        <line x1="12" y1="14" x2="15" y2="32" stroke="#9a7038" stroke-width="1"/>
+        <line x1="22" y1="14" x2="23.5" y2="32" stroke="#9a7038" stroke-width="1"/>
+        <line x1="32" y1="14" x2="32.5" y2="32" stroke="#9a7038" stroke-width="1"/>
+        <line x1="42" y1="14" x2="41.5" y2="32" stroke="#9a7038" stroke-width="1"/>
+        <line x1="52" y1="14" x2="50.5" y2="32" stroke="#9a7038" stroke-width="1"/>
+        <line x1="62" y1="14" x2="59" y2="32" stroke="#9a7038" stroke-width="1"/>
+        <path d="M6,14 L68,14" stroke="#9a7038" stroke-width="1.5"/>
+        <!-- basket rim -->
+        <rect x="4" y="10" width="66" height="5" rx="2.5" fill="#b98a4d" stroke="#8a6234" stroke-width="1"/>
+      </svg>
+    </div>
+
     <div id="puppy-canvas">
       <!-- div-based puppy — no SVG transform bugs, legs always on body -->
       <div id="p-zzz">Zzz</div>
+      <div id="p-helmet">⛑️</div>
       <div id="puppy" class="state-sit">
         <div id="p-body"></div>
         <div id="p-tail"></div>
@@ -751,6 +877,7 @@
     <div id="time-label">Good morning ☀️</div>
     <div id="season-label">Spring 🌸</div>
     <div id="puppy-mood-label">Ready for a walk!</div>
+    <div id="wakelock-dot" title="Screen kept awake"></div>
   </div>
 
   <!-- PAGES -->
@@ -781,6 +908,25 @@
         </div>
       </div>
 
+      <div class="card" id="friendship-card">
+        <div class="card-title">❤️ Friendship</div>
+        <div style="display:flex;align-items:baseline;justify-content:space-between">
+          <div style="font-size:17px;font-weight:700;color:var(--accent)" id="friendship-level">New Friend</div>
+          <div style="font-size:13px;color:var(--text2)" id="friendship-points">0 points</div>
+        </div>
+      </div>
+
+      <div class="card" id="cycling-card">
+        <div class="card-title">🚴 Cycling</div>
+        <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:8px">
+          <div style="font-size:17px;font-weight:700;color:var(--accent2)" id="cycling-km-display">0.0 km</div>
+          <div style="font-size:13px;color:var(--text2)" id="cycling-timer-display"></div>
+        </div>
+        <div class="adv-progress light-progress" style="margin-bottom:0">
+          <div class="adv-fill" id="cycling-fill" style="width:0%;background:linear-gradient(to right,#5ac8fa,#34c759)"></div>
+        </div>
+      </div>
+
       <div id="action-zone">
         <div id="walk-timer" style="display:none">00:00</div>
         <button class="btn-primary" id="btn-walk-toggle" onclick="toggleWalk()">
@@ -789,6 +935,10 @@
         <div class="btn-row">
           <button class="btn-secondary" onclick="openStepEntry()">🍎 Add steps from Health</button>
           <button class="btn-secondary" onclick="showSyncOptions()">📤 Sync options</button>
+        </div>
+        <div class="btn-row">
+          <button class="btn-secondary" id="btn-cycle-toggle" onclick="toggleCycling()">🚴 Start cycling</button>
+          <button class="btn-secondary" onclick="openCyclingModal()">📝 Log a ride</button>
         </div>
         <div class="btn-row">
           <button class="btn-secondary" onclick="openModal('modal-talk')">💬 Talk to Puppy</button>
@@ -956,12 +1106,23 @@
           <div style="font-size:28px;font-weight:800;color:var(--accent)" id="best-streak">0</div>
           <div style="font-size:12px;color:var(--text2);margin-top:4px">Best streak</div>
         </div>
+        <div style="background:var(--card);border:1px solid var(--card-border);border-radius:var(--radius);padding:16px;text-align:center">
+          <div style="font-size:28px;font-weight:800;color:var(--accent2)" id="total-cycling-km">0.0</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:4px">🚴 Cycling km</div>
+        </div>
       </div>
 
       <div class="section-hd">Walk history</div>
       <div id="walk-history">
         <div style="text-align:center;padding:32px;color:var(--text2)">
           No walks yet — let's go, Puppy! 🐾
+        </div>
+      </div>
+
+      <div class="section-hd">Memory book</div>
+      <div id="memory-book">
+        <div style="text-align:center;padding:32px;color:var(--text2)">
+          No memories yet — go make some! 🐾
         </div>
       </div>
 
@@ -1100,6 +1261,24 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="modal-cycling" onclick="if(event.target===this)closeModal('modal-cycling')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="cycling-modal-title">🚴 How far did you ride?</div>
+    <div id="cycling-modal-sub" class="card-body" style="margin-bottom:12px"></div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+      <input id="cycling-km-input" type="number" inputmode="decimal" placeholder="e.g. 8.0"
+        style="flex:1;font-size:26px;font-weight:800;text-align:center;border:2px solid rgba(52,199,89,0.4);border-radius:14px;padding:11px;background:#f8fff8;color:var(--text);outline:none">
+      <div style="font-size:16px;font-weight:700;color:var(--text2)">km</div>
+    </div>
+    <div style="font-size:11px;color:var(--text2);margin-bottom:14px">Counts toward your adventures too 🗺️🚀</div>
+    <div class="btn-row">
+      <button class="btn-secondary" onclick="closeModal('modal-cycling')">Skip</button>
+      <button class="btn-primary" style="flex:2" onclick="saveCyclingKm()">Save ride 🐾</button>
+    </div>
+  </div>
+</div>
+
 <!-- TEST PANEL -->
 <div id="test-panel">
   <div class="test-title">🧪 Test Mode</div>
@@ -1115,6 +1294,7 @@
     <button class="test-btn" onclick="forceTime(21)">🌙 Night</button>
     <button class="test-btn" onclick="forceTime(null)">🕐 Real time</button>
     <button class="test-btn" onclick="simulateWalk()">🚶 Simulate walk</button>
+    <button class="test-btn" onclick="S.cyclingKm+=5;updateCyclingUI();saveState();toast('+5km cycling 🚴')">🚴 +5km cycling</button>
     <button class="test-btn" onclick="document.getElementById('test-panel').classList.remove('open')">✕ Close</button>
   </div>
 </div>
@@ -1145,7 +1325,58 @@ const S = {
   lastBadgeCheck: 0,
   motionEnabled: false,
   stepSinceLastPaw: 0,
+  friendship: 0,
+  memories: [],
+  cyclingKm: 0,
 };
+let isCyclingActive = false;
+let cyclingStartTime = null;
+let cyclingTimerInterval = null;
+let wakeLock = null;
+const KM_TO_STEPS = 1250;
+
+const DISCOVERIES = [
+  "🌼 Found a yellow flower",
+  "🪶 Found a silver feather",
+  "🦋 Chased a butterfly",
+  "🐞 Met a friendly ladybug",
+  "⭐ Found a shiny pebble",
+  "🌈 Saw a rainbow",
+  "🍃 Found an interesting leaf",
+  "☁️ Watched funny clouds",
+];
+
+function friendshipLevel(){
+  const p = S.friendship;
+  if(p < 10) return "New Friend";
+  if(p < 25) return "Best Friend";
+  if(p < 50) return "Adventure Buddy";
+  if(p < 100) return "Trusted Companion";
+  return "Best Adventure Friend";
+}
+
+function updateFriendshipUI(){
+  document.getElementById('friendship-level').textContent = friendshipLevel();
+  document.getElementById('friendship-points').textContent = S.friendship + ' points';
+}
+
+function renderMemories(){
+  const el = document.getElementById('memory-book');
+  if(!el) return;
+  if(!S.memories.length){
+    el.innerHTML = '<div style="text-align:center;padding:32px;color:var(--text2)">No memories yet — go make some! 🐾</div>';
+    return;
+  }
+  el.innerHTML = S.memories.slice().reverse().slice(0,30).map(m=>`
+    <div class="history-item">
+      <div class="hist-icon">${m.icon}</div>
+      <div class="hist-info">
+        <div class="hist-title">${m.text}</div>
+        <div class="hist-sub">${m.date}</div>
+      </div>
+    </div>
+  `).join('');
+}
 
 const BADGES = [
   {id:'first',icon:'🐾',name:'First steps',req:1,check:()=>S.totalSteps>=1},
@@ -1158,6 +1389,7 @@ const BADGES = [
   {id:'walks5',icon:'🚶',name:'5 walks',req:5,check:()=>S.walks.length>=5},
   {id:'talks',icon:'💬',name:'Talked to puppy',req:1,check:()=>S.talked},
   {id:'km1',icon:'📍',name:'1 km total',req:1,check:()=>S.distKm>=1},
+  {id:'cycle10',icon:'🚴',name:'10km cycled',req:10,check:()=>S.cyclingKm>=10},
 ];
 
 const SILK_ROAD = [
@@ -1308,8 +1540,8 @@ function updateTimeOfDay(){
 
   document.getElementById('time-label').textContent = td.label;
 
-  // puppy state (don't change if walking)
-  if(!S.walking){
+  // puppy state (don't change if walking or cycling)
+  if(!S.walking && !isCyclingActive){
     const pc = document.getElementById('puppy');
     pc.className = 'state-'+td.puppyState;
     document.getElementById('puppy-mood-label').textContent = td.moodText;
@@ -1446,6 +1678,18 @@ function spawnPaw(){
   setTimeout(()=>p.remove(), 2000);
 }
 
+function spawnSpeedline(){
+  const track = document.getElementById('cycle-speedlines');
+  const l = document.createElement('div');
+  l.className='speedline';
+  l.style.right = '10px';
+  l.style.top = (8+Math.random()*30)+'px';
+  l.style.width = (14+Math.random()*16)+'px';
+  track.appendChild(l);
+  setTimeout(()=>l.remove(), 650);
+}
+let _speedlineInterval = null;
+
 // ════════════════════════════════
 // WALK
 // ════════════════════════════════
@@ -1466,6 +1710,7 @@ function startWalk(){
   document.getElementById('walk-timer').style.display='block';
   setPuppyState('walk');
   document.getElementById('puppy-mood-label').textContent = "Let's go! 🐾";
+  requestWakeLock();
 
   // try motion sensor
   if(window.DeviceMotionEvent){
@@ -1513,6 +1758,18 @@ function endWalk(){
     if(S.streak > S.bestStreak) S.bestStreak = S.streak;
     S.steps = 0;
     S.distKm = 0;
+
+    S.friendship += 1;
+    const discovery = DISCOVERIES[Math.floor(Math.random()*DISCOVERIES.length)];
+    S.memories.push({
+      icon: discovery.split(' ')[0],
+      text: discovery.slice(discovery.indexOf(' ')+1),
+      date: new Date().toLocaleDateString('en-GB',{weekday:'short',month:'short',day:'numeric'}),
+    });
+    updateFriendshipUI();
+    renderMemories();
+    toast('🐶 Welcome back! ' + discovery);
+
     saveState();
     renderHistory();
     updateStats();
@@ -1525,9 +1782,153 @@ function endWalk(){
 
   disableMotion();
   updateTimeOfDay();
+  releaseWakeLock();
 }
 
 // ════════════════════════════════
+// WAKE LOCK — keeps screen on during a walk or ride
+// ════════════════════════════════
+async function requestWakeLock(){
+  try{
+    if('wakeLock' in navigator){
+      wakeLock = await navigator.wakeLock.request('screen');
+      document.getElementById('wakelock-dot').classList.add('active');
+      wakeLock.addEventListener('release',()=>{
+        document.getElementById('wakelock-dot').classList.remove('active');
+        wakeLock = null;
+      });
+    }
+  }catch(e){/* wake lock not available — silently skip */}
+}
+function releaseWakeLock(){
+  if(wakeLock){ wakeLock.release().catch(()=>{}); wakeLock=null; }
+  document.getElementById('wakelock-dot').classList.remove('active');
+}
+document.addEventListener('visibilitychange', async ()=>{
+  if(document.visibilityState==='visible' && wakeLock===null && (S.walking||isCyclingActive)){
+    await requestWakeLock();
+  }
+});
+
+// ════════════════════════════════
+// CYCLING MODE — puppy rides along in the bike's front basket, no human shown.
+// Sequence: puppy asks "cycling?" → basket + bike appear → puppy hops in and
+// settles down inside the basket, facing forward, ears flapping in the wind.
+// ════════════════════════════════
+function toggleCycling(){
+  if(isCyclingActive) stopCycling(); else startCycling();
+}
+
+const CYCLE_ASK_PHRASES = ['Cycling?! 🚲','Ooh, a bike ride?! 🐶','Bicycle time?! 🚴'];
+
+function startCycling(){
+  isCyclingActive = true;
+  cyclingStartTime = Date.now();
+
+  const btn = document.getElementById('btn-cycle-toggle');
+  btn.textContent = '🛑 Stop cycling';
+  btn.style.background = '#34c759';
+  btn.style.color = '#fff';
+  requestWakeLock();
+
+  // Phase 1 — puppy gets excited and asks about cycling first
+  setPuppyState('excited');
+  document.getElementById('puppy-mood-label').textContent = 'Cycling? 🚲';
+  document.getElementById('heart-container').style.display = 'block';
+  puppySay(CYCLE_ASK_PHRASES[Math.floor(Math.random()*CYCLE_ASK_PHRASES.length)], 1200);
+
+  // Phase 2 — bike rolls in, basket appears
+  setTimeout(()=>{
+    if(!isCyclingActive) return;
+    document.getElementById('heart-container').style.display = 'none';
+    document.getElementById('bike-rig').classList.add('visible');
+    document.getElementById('bike-basket').classList.add('visible');
+    puppySay("That's my ride! 🚲", 1200);
+  }, 1100);
+
+  // Phase 3 — puppy hops into the basket and settles in, facing forward
+  setTimeout(()=>{
+    if(!isCyclingActive) return;
+    document.getElementById('p-helmet').classList.add('visible');
+    setPuppyState('cycling');
+    document.getElementById('bike-rig').classList.add('rolling');
+    document.getElementById('cycle-speedlines').classList.add('visible');
+    _speedlineInterval = setInterval(spawnSpeedline, 220);
+    document.getElementById('puppy-mood-label').textContent = 'Riding in the basket! 🚴💨';
+    puppySay('Wheee! Onward! 🐶⛑️', 2200);
+  }, 2100);
+
+  cyclingTimerInterval = setInterval(()=>{
+    const elapsed = Math.floor((Date.now()-cyclingStartTime)/1000);
+    const mm = String(Math.floor(elapsed/60)).padStart(2,'0');
+    const ss = String(elapsed%60).padStart(2,'0');
+    document.getElementById('cycling-timer-display').textContent = mm+':'+ss;
+  }, 1000);
+}
+
+function stopCycling(){
+  isCyclingActive = false;
+  clearInterval(cyclingTimerInterval);
+  cyclingTimerInterval = null;
+  if(_speedlineInterval){ clearInterval(_speedlineInterval); _speedlineInterval = null; }
+  document.getElementById('p-helmet').classList.remove('visible');
+  document.getElementById('heart-container').style.display = 'none';
+  document.getElementById('bike-rig').classList.remove('visible','rolling');
+  document.getElementById('bike-basket').classList.remove('visible');
+  document.getElementById('cycle-speedlines').classList.remove('visible');
+  const btn = document.getElementById('btn-cycle-toggle');
+  btn.textContent = '🚴 Start cycling';
+  btn.style.background = '';
+  btn.style.color = '';
+  document.getElementById('cycling-timer-display').textContent = '';
+  if(!S.walking) releaseWakeLock();
+
+  let summary = 'How far did you ride?';
+  if(cyclingStartTime){
+    const elapsed = Math.floor((Date.now()-cyclingStartTime)/1000);
+    const m = Math.floor(elapsed/60), s = elapsed%60;
+    summary = `You rode for ${m}m ${s}s — how far?`;
+  }
+  cyclingStartTime = null;
+  setPuppyState('sit');
+  openCyclingModal(summary);
+}
+
+function openCyclingModal(summary){
+  document.getElementById('cycling-modal-sub').textContent = summary || 'Forgot to log a ride? Add it now.';
+  document.getElementById('cycling-km-input').value = '';
+  openModal('modal-cycling');
+  setTimeout(()=>document.getElementById('cycling-km-input').focus(), 250);
+}
+
+function saveCyclingKm(){
+  const km = parseFloat(document.getElementById('cycling-km-input').value || '0');
+  closeModal('modal-cycling');
+  if(km > 0){
+    S.cyclingKm += km;
+    const bonus = Math.round(km * KM_TO_STEPS);
+    S.totalSteps += bonus;
+    S.distKm += km;
+    updateCyclingUI();
+    updateStats();
+    updateAdventures();
+    checkBadges();
+    saveState();
+    toast(`🚴 ${km.toFixed(1)}km ride saved! +${bonus.toLocaleString()} step-equiv 🐾`);
+    setPuppyState('excited');
+    puppySay('Woof! Great ride! 🐶🚴');
+    setTimeout(()=>setPuppyState(S.walking?'walk':'sit'), 2500);
+  } else {
+    toast('Woof! Ride done! 🐾');
+  }
+}
+
+function updateCyclingUI(){
+  document.getElementById('cycling-km-display').textContent = S.cyclingKm.toFixed(1)+' km';
+  document.getElementById('total-cycling-km').textContent = S.cyclingKm.toFixed(1);
+  const pct = Math.min(100, (S.cyclingKm/10)*100);
+  document.getElementById('cycling-fill').style.width = pct+'%';
+}
 // THIRST SYSTEM
 // ════════════════════════════════
 /*
@@ -1985,7 +2386,7 @@ function talkToPuppy(type){
     document.getElementById('heart-container').style.display='block';
     setTimeout(()=>{
       document.getElementById('heart-container').style.display='none';
-      if(!S.walking) updateTimeOfDay();
+      if(!S.walking && !isCyclingActive) updateTimeOfDay();
     },3000);
   } else if(type==='busy'){
     setPuppyState('sit');
@@ -2060,7 +2461,7 @@ function selectSync(el, method){
 }
 
 function backupData(){
-  const data = {steps:S.totalSteps,distKm:S.distKm,streak:S.streak,walks:S.walks,bestStreak:S.bestStreak,puppyName:S.puppyName,settings:S.settings};
+  const data = {steps:S.totalSteps,distKm:S.distKm,streak:S.streak,walks:S.walks,bestStreak:S.bestStreak,puppyName:S.puppyName,settings:S.settings,friendship:S.friendship,memories:S.memories,cyclingKm:S.cyclingKm};
   const str = JSON.stringify(data);
   if(navigator.clipboard){
     navigator.clipboard.writeText(str).then(()=>toast('Data copied to clipboard 📋')).catch(()=>fallbackCopy(str));
@@ -2086,9 +2487,15 @@ function restoreData(){
     S.walks = d.walks||[];
     S.puppyName = d.puppyName||'Mochi';
     S.settings = d.settings||S.settings;
+    S.friendship = d.friendship||0;
+    S.memories = d.memories||[];
+    S.cyclingKm = d.cyclingKm||0;
     saveState();
     updateStats();
     renderHistory();
+    updateFriendshipUI();
+    renderMemories();
+    updateCyclingUI();
     toast('Data restored! 🐾');
   } catch(e){toast('Invalid data format');}
 }
@@ -2136,7 +2543,22 @@ function renamePuppy(){
 function resetAll(){
   localStorage.clear();
   S.steps=0;S.totalSteps=0;S.distKm=0;S.streak=0;S.bestStreak=0;S.walks=[];S.walkMinutes=0;
-  updateStats();renderHistory();updateAdventures();
+  S.friendship=0;S.memories=[];S.cyclingKm=0;
+  if(isCyclingActive){
+    isCyclingActive=false;
+    cyclingStartTime=null;
+    clearInterval(cyclingTimerInterval);
+    if(_speedlineInterval){ clearInterval(_speedlineInterval); _speedlineInterval=null; }
+    document.getElementById('p-helmet').classList.remove('visible');
+    document.getElementById('heart-container').style.display='none';
+    document.getElementById('bike-rig').classList.remove('visible','rolling');
+    document.getElementById('bike-basket').classList.remove('visible');
+    document.getElementById('cycle-speedlines').classList.remove('visible');
+    document.getElementById('btn-cycle-toggle').textContent='🚴 Start cycling';
+    document.getElementById('btn-cycle-toggle').style.background='';
+    document.getElementById('btn-cycle-toggle').style.color='';
+  }
+  updateStats();renderHistory();updateAdventures();updateFriendshipUI();renderMemories();updateCyclingUI();
   toast('All data reset 🗑️');
 }
 
@@ -2181,6 +2603,9 @@ function saveState(){
     settings:S.settings,
     syncMethod:S.syncMethod,
     talked:S.talked,
+    friendship:S.friendship,
+    memories:S.memories,
+    cyclingKm:S.cyclingKm,
   }));
 }
 
@@ -2196,6 +2621,9 @@ function loadState(){
     S.settings = Object.assign({sleep:true,season:true,reminder:false,reminderTime:'08:00'}, d.settings||{});
     S.syncMethod = d.syncMethod||'shortcuts';
     S.talked = d.talked||false;
+    S.friendship = d.friendship||0;
+    S.memories = d.memories||[];
+    S.cyclingKm = d.cyclingKm||0;
   }catch(e){}
 }
 
@@ -2207,7 +2635,7 @@ function showPage(name, btn){
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('page-'+name).classList.add('active');
   btn.classList.add('active');
-  if(name==='stats') renderHistory();
+  if(name==='stats'){ renderHistory(); renderMemories(); }
   if(name==='adventure') updateAdventures();
 }
 
@@ -2238,6 +2666,9 @@ updateAdventures();
 updateTimeOfDay();
 updateSeason();
 checkBadges();
+updateFriendshipUI();
+renderMemories();
+updateCyclingUI();
 
 document.getElementById('puppy-name-display').textContent = S.puppyName;
 document.getElementById('step-method-label').textContent =
@@ -2260,7 +2691,7 @@ setInterval(updateTimeOfDay, 60000);
 
 // Puppy random idle behaviors
 setInterval(()=>{
-  if(S.walking || document.hidden) return;
+  if(S.walking || isCyclingActive || document.hidden) return;
   const h = getHour();
   const slot = getTimeSlot(h);
   if(slot==='night') return;
@@ -2283,7 +2714,41 @@ setInterval(()=>{
   }, 5000);
 }, 20000);
 
-console.log('🐾 Puppy Walk v3 — Time-aware, season-aware, privacy-first!');
+console.log('🐾 Puppy Walk v3 — Time-aware, season-aware, privacy-first! Cycling: puppy rides in front basket.');
+
+// ════════════════════════════════
+// URL SYNC — Apple Shortcuts (or any automation) can hand off steps/cycling
+// via ?steps=NNNN&cycling=K.K — this makes the "Apple Shortcuts" sync option
+// on the Settings page actually functional, not just instructions.
+// ════════════════════════════════
+function checkURLSync(){
+  try{
+    const params = new URLSearchParams(window.location.search);
+    const urlSteps = parseInt(params.get('steps')||'0');
+    const urlCycling = parseFloat(params.get('cycling')||'0');
+    if((!urlSteps||isNaN(urlSteps)||urlSteps<=0) && (!urlCycling||urlCycling<=0)) return;
+
+    const added = urlSteps>S.totalSteps ? urlSteps-S.totalSteps : 0;
+    const parts = [];
+    if(urlSteps>0) parts.push('👟 Steps: '+urlSteps.toLocaleString()+(added>0?' (+'+added.toLocaleString()+' new)':''));
+    if(urlCycling>0) parts.push('🚴 Cycling: '+urlCycling.toFixed(1)+' km');
+    const msg = 'Apple Health sync!\n\n'+parts.join('\n')+'\n\nUpdate your puppy?';
+
+    setTimeout(()=>{
+      if(confirm(msg)){
+        if(added>0) addSteps(added);
+        if(urlCycling>0){
+          S.cyclingKm = urlCycling;
+          updateCyclingUI();
+          saveState();
+        }
+        toast('🍎 Synced! Woof! 🐶');
+      }
+      window.history.replaceState({},'',window.location.pathname);
+    }, 800);
+  }catch(e){}
+}
+checkURLSync();
 </script>
 </body>
 </html>
